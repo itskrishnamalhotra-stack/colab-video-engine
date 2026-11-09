@@ -1,5 +1,5 @@
-"""Blender GPU tail: open the packed, baked scene; select CUDA; render missing frames."""
-import argparse,json,struct,sys,time
+"""Blender GPU tail: packed scene, OptiX preferred, persistent data and GPU OIDN."""
+import argparse,hashlib,json,struct,sys,time
 from pathlib import Path
 import bpy
 
@@ -15,7 +15,7 @@ print('BUILD_STAGE packed animation scene loaded',flush=True)
 scene.render.engine='CYCLES'
 prefs=bpy.context.preferences.addons['cycles'].preferences
 backend='CUDA'
-if args.benchmark and not args.inspect_only:
+if not args.inspect_only:
  try:
   prefs.compute_device_type='OPTIX';prefs.get_devices()
   if any(d.type=='OPTIX' for d in prefs.devices):backend='OPTIX'
@@ -29,12 +29,11 @@ if not devices and not args.inspect_only:raise RuntimeError('No NVIDIA render de
 scene.cycles.device='GPU';scene.cycles.samples=64;scene.cycles.use_adaptive_sampling=True
 scene.cycles.adaptive_threshold=.035;scene.cycles.use_denoising=True
 scene.cycles.max_bounces=6;scene.cycles.diffuse_bounces=3;scene.cycles.glossy_bounces=3
-if args.benchmark:
- scene.render.use_persistent_data=True
- # Retain the high-quality OIDN algorithm/passes; move it to the GPU when supported.
- scene.cycles.denoiser='OPENIMAGEDENOISE';scene.cycles.denoising_quality='HIGH'
- scene.cycles.denoising_use_gpu=bool(devices and prefs.has_oidn_gpu_devices())
- scene.render.threads_mode='AUTO'
+scene.render.use_persistent_data=True
+# Retain the high-quality OIDN algorithm/passes; move it to the GPU when supported.
+scene.cycles.denoiser='OPENIMAGEDENOISE';scene.cycles.denoising_quality='HIGH'
+scene.cycles.denoising_use_gpu=bool(devices and prefs.has_oidn_gpu_devices())
+scene.render.threads_mode='AUTO'
 scene.render.resolution_x=1080;scene.render.resolution_y=1920;scene.render.resolution_percentage=100
 scene.render.fps=30;scene.render.image_settings.file_format='PNG';scene.render.image_settings.color_mode='RGB'
 scene.render.filepath=str(frames/'frame_');scene.render.use_file_extension=True;scene.render.use_overwrite=False
@@ -62,6 +61,15 @@ first=scene.frame_start;last=scene.frame_end
 if args.benchmark:
  # A separate empty folder is required; never mix benchmark frames with the current render.
  if any(frames.iterdir()):raise RuntimeError('Benchmark frames folder must be new and empty.')
+else:
+ # Refuse to mix cached frames from different backends/settings or scene versions.
+ with (project/'prepared-scene.blend').open('rb') as source:scene_sha=hashlib.file_digest(source,'sha256').hexdigest()
+ cache_config={**device_info,'scene_sha256':scene_sha}
+ marker=frames/'render-config.json'
+ if marker.is_file():
+  if json.loads(marker.read_text())!=cache_config:raise RuntimeError('Cached frame settings differ. Use a fresh frames folder for this render configuration.')
+ elif any(frames.glob('frame_*.png')):raise RuntimeError('Cached frames have no settings record. Use a fresh frames folder.')
+ marker.write_text(json.dumps(cache_config,indent=2))
 for path in frames.glob('frame_*.png'):
  if not valid_png(path):path.unlink() # Only incomplete renderer-owned PNGs in this exact frames folder.
 cached=sum(valid_png(frames/f'frame_{f:04d}.png') for f in range(first,last+1))

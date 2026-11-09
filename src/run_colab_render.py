@@ -48,13 +48,12 @@ def prepare_snow(root,manifest):
 
 def main(root,benchmark=False):
  root=Path(root).resolve();root.mkdir(parents=True,exist_ok=True)
- if benchmark:
-  previous=root/'process-status.json'
-  if previous.is_file():
-   old=json.loads(previous.read_text());pid=old.get('pid')
-   cmdline=Path(f'/proc/{pid}/cmdline')
-   if old.get('state')=='running' and cmdline.is_file() and b'blender' in cmdline.read_bytes().lower():
-    raise RuntimeError('The previous Blender render is still running. Stop its cell first; keep this runtime connected so installed files remain cached.')
+ previous=root/'process-status.json'
+ if previous.is_file():
+  old=json.loads(previous.read_text());pid=old.get('pid')
+  cmdline=Path(f'/proc/{pid}/cmdline')
+  if old.get('state')=='running' and cmdline.is_file() and b'blender' in cmdline.read_bytes().lower():
+   raise RuntimeError('The previous Blender render is still running. Stop its cell first; keep this runtime connected so installed files remain cached.')
  status=root/('gpu-benchmark-status.json' if benchmark else 'gpu-status.json')
  def stage(name,**kw):
   status.write_text(json.dumps({'stage':name,'updated':time.time(),**kw},indent=2),encoding='utf-8')
@@ -91,12 +90,12 @@ def main(root,benchmark=False):
   except Exception as error:errors.append(str(error))
  else:raise RuntimeError('Prepared scene download failed: '+'; '.join(errors))
  run_root=root/('benchmark-'+str(time.time_ns())) if benchmark else root
- frames=run_root/'frames' if benchmark else project/'renders/gpu-frames';frames.mkdir(parents=True,exist_ok=True)
- stage('rendering_cuda',note='Opening the packed scene; all scene construction and contact baking were completed locally.')
+ frames=run_root/'frames' if benchmark else project/'renders'/('gpu-frames-optimized-v1-'+prepared['sha256'][:12]);frames.mkdir(parents=True,exist_ok=True)
+ stage('rendering_gpu',note='OptiX preferred, persistent data and GPU OIDN when supported; original resolution and sample budget retained.')
  render_start=time.monotonic()
  from gpu_process_monitor import monitored_run
  command=[str(exe),'--background','--factory-startup','--enable-autoexec','--python-exit-code','1']
- command+=['--debug-cycles'] if benchmark else ['--threads','4']
+ command+=['--debug-cycles'] if benchmark else []
  command+=['--python',str(root/'render_prepared.py'),'--','--project',str(project),'--frames',str(frames)]
  if benchmark:command+=['--benchmark','--cycles-print-stats']
  monitor=monitored_run(command,run_root)
@@ -119,7 +118,7 @@ def main(root,benchmark=False):
  if abs(float(info['format']['duration'])-expected_duration)>.25:raise ValueError('Output duration is incorrect.')
  output.with_suffix('.verification.json').write_text(result)
  device=json.loads((project/'data/render-device.json').read_text())
- if device.get('requested_device')!='CUDA' or device.get('engine')!='CYCLES':raise ValueError('CUDA renderer verification failed.')
+ if device.get('requested_device') not in ('CUDA','OPTIX') or device.get('engine')!='CYCLES':raise ValueError('NVIDIA renderer verification failed.')
  stage('complete',output=str(output),bytes=output.stat().st_size,sha256=sha(output),render_and_encode_seconds=round(time.monotonic()-render_start,2),renderer=device)
  print('GPU_VIDEO_READY',str(output),flush=True)
  return output
