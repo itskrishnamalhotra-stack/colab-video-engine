@@ -1,12 +1,29 @@
-# Private Colab video renderer
+# GPU video renderer — Kaggle and Colab
+
+[Open in Kaggle](https://www.kaggle.com/kernels/welcome?src=https://github.com/itskrishnamalhotra-stack/colab-video-engine/blob/main/Render_Kaggle.ipynb) · [Kaggle notebook source](https://github.com/itskrishnamalhotra-stack/colab-video-engine/blob/main/Render_Kaggle.ipynb)
 
 [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/itskrishnamalhotra-stack/colab-video-engine/blob/main/Render.ipynb)
+
+## Kaggle
+
+Open the Kaggle link, sign in, choose **Settings → Accelerator → GPU T4 ×2** if
+available, turn **Internet ON**, then **Run all**. The notebook embeds the same
+prepared project and soundtrack. Nothing needs uploading and no runtime token
+or dataset attachment is required. Kaggle may require account verification
+before offering accelerators. GPU assignment and usage limits are controlled by Kaggle.
+
+If the import link opens an empty notebook, use the notebook editor's
+**File → Import Notebook** option and paste the Kaggle notebook source URL above.
+The MP4 previews inline and is linked in the output; it is also under
+`/kaggle/working/video_engine/outputs`. A failed render produces a downloadable
+error report. Native CUDA rendering on Kaggle still requires its first live test.
+
+## Colab
 
 Open the link, choose an available NVIDIA GPU, and Run all. The prepared scene,
 Heart narration, word captions, music and effects are embedded in the notebook.
 No manual file upload, Git clone, runtime token, Drive mount or external bridge is needed.
-Colab may ask you once to sign in to GitHub and enable access to private repositories.
-That browser authorization only loads the notebook; its prepared payload is already embedded.
+The repository is public, so no private-repository GitHub authorization is needed.
 
 The first run downloads official Blender 5.2.3 and Blender Studio Snow v2, checks
 their hashes, selects native CUDA rendering, encodes/validates the MP4, previews
@@ -21,6 +38,7 @@ Free GPU assignment and session limits depend on [Colab](https://research.google
 ## Files
 
 - `Render.ipynb`: self-contained launch notebook.
+- `Render_Kaggle.ipynb`: self-contained Kaggle launch notebook.
 - `render-bundle.zip`: matching prepared project, soundtrack and fonts.
 - `manifest.json`: hashes of the bundle contents and verified Snow archive.
 - `src/`: readable snapshots of scene, script and renderer.
