@@ -8,7 +8,7 @@
 
 Open the Kaggle link, sign in, choose **Settings → Accelerator → GPU T4 ×2** if
 available, turn **Internet ON**, then **Run all**. The notebook embeds the same
-prepared project and soundtrack. Nothing needs uploading and no runtime token
+prepared-project hash and fetches its bundle automatically from this public repo. Nothing needs uploading and no runtime token
 or dataset attachment is required. Kaggle may require account verification
 before offering accelerators. GPU assignment and usage limits are controlled by Kaggle.
 
