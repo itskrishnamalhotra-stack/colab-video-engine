@@ -7,15 +7,16 @@ parser=argparse.ArgumentParser();parser.add_argument('--project',required=True);
 parser.add_argument('--benchmark',action='store_true',help='Only two full-quality frames with GPU optimizations; no final video.')
 parser.add_argument('--inspect-only',action='store_true',help='Check settings/API without rendering, including on a CPU-only workstation.')
 parser.add_argument('--cycles-print-stats',action='store_true')
+parser.add_argument('--renderer',choices=['cycles','eevee'],default='cycles')
 args=parser.parse_args(sys.argv[sys.argv.index('--')+1:])
 project=Path(args.project);frames=Path(args.frames);frames.mkdir(parents=True,exist_ok=True)
 bpy.ops.wm.open_mainfile(filepath=str(project/'prepared-scene.blend'),load_ui=False,use_scripts=True)
 scene=bpy.context.scene
 print('BUILD_STAGE packed animation scene loaded',flush=True)
-scene.render.engine='CYCLES'
+scene.render.engine='BLENDER_EEVEE' if args.renderer=='eevee' else 'CYCLES'
 prefs=bpy.context.preferences.addons['cycles'].preferences
 backend='CUDA'
-if not args.inspect_only:
+if args.renderer=='cycles' and not args.inspect_only:
  try:
   prefs.compute_device_type='OPTIX';prefs.get_devices()
   if any(d.type=='OPTIX' for d in prefs.devices):backend='OPTIX'
@@ -25,7 +26,7 @@ devices=[]
 for device in prefs.devices:
  device.use=device.type==backend
  if device.use:devices.append(device.name)
-if not devices and not args.inspect_only:raise RuntimeError('No NVIDIA render device available; CPU fallback is disabled.')
+if args.renderer=='cycles' and not devices and not args.inspect_only:raise RuntimeError('No NVIDIA render device available; CPU fallback is disabled.')
 scene.cycles.device='GPU';scene.cycles.samples=64;scene.cycles.use_adaptive_sampling=True
 scene.cycles.adaptive_threshold=.035;scene.cycles.use_denoising=True
 scene.cycles.max_bounces=6;scene.cycles.diffuse_bounces=3;scene.cycles.glossy_bounces=3
@@ -34,15 +35,36 @@ scene.render.use_persistent_data=True
 scene.cycles.denoiser='OPENIMAGEDENOISE';scene.cycles.denoising_quality='HIGH'
 scene.cycles.denoising_use_gpu=bool(devices and prefs.has_oidn_gpu_devices())
 scene.render.threads_mode='AUTO'
+graphics={}
+if args.renderer=='eevee':
+ backend='OPENGL'
+ if not args.inspect_only:
+  import gpu
+  gpu.init()
+  graphics={'vendor':gpu.platform.vendor_get(),'renderer':gpu.platform.renderer_get(),'backend':gpu.platform.backend_type_get()}
+  if 'NVIDIA' not in graphics['vendor'].upper() or any(x in graphics['renderer'].lower() for x in ('llvmpipe','softpipe','software')):
+   raise RuntimeError('EEVEE requires an NVIDIA graphics context; refusing software rendering. Detected: '+json.dumps(graphics))
+  devices=[graphics['renderer']]
+ scene.eevee.taa_render_samples=64
+ scene.eevee.use_raytracing=True;scene.eevee.ray_tracing_method='SCREEN'
+ scene.eevee.ray_tracing_options.resolution_scale='1'
+ scene.eevee.ray_tracing_options.screen_trace_quality=.5
+ scene.eevee.ray_tracing_options.use_denoise=True
+ scene.eevee.fast_gi_quality=.5
+ scene.eevee.shadow_ray_count=2;scene.eevee.shadow_step_count=6
+ scene.eevee.shadow_pool_size='512'
+ for obj in scene.objects:
+  if obj.type=='LIGHT' and hasattr(obj.data,'use_shadow_jitter'):obj.data.use_shadow_jitter=True
 scene.render.resolution_x=1080;scene.render.resolution_y=1920;scene.render.resolution_percentage=100
 scene.render.fps=30;scene.render.image_settings.file_format='PNG';scene.render.image_settings.color_mode='RGB'
 scene.render.filepath=str(frames/'frame_');scene.render.use_file_extension=True;scene.render.use_overwrite=False
 if args.benchmark:scene.frame_end=min(scene.frame_start+1,scene.frame_end)
-device_info={'engine':'CYCLES','requested_device':backend,'device':', '.join(devices),'prepared_scene':True,
- 'persistent_data':scene.render.use_persistent_data,'denoiser':scene.cycles.denoiser,
- 'denoising_use_gpu':scene.cycles.denoising_use_gpu,'samples':scene.cycles.samples,
+device_info={'engine':scene.render.engine,'requested_device':backend,'device':', '.join(devices),'prepared_scene':True,
+ 'persistent_data':scene.render.use_persistent_data,'denoiser':scene.cycles.denoiser if args.renderer=='cycles' else 'EEVEE_RAYTRACE',
+ 'denoising_use_gpu':scene.cycles.denoising_use_gpu if args.renderer=='cycles' else True,'samples':64,
  'adaptive_threshold':scene.cycles.adaptive_threshold,'resolution':[1080,1920],
  'threads_mode':scene.render.threads_mode,'frame_range':[scene.frame_start,scene.frame_end],'benchmark':args.benchmark}
+if args.renderer=='eevee':device_info.update(graphics=graphics,raytracing='SCREEN',raytrace_resolution_scale='1',raytrace_quality=.5,fast_gi_quality=.5,shadow_rays=2,shadow_steps=6)
 print('BUILD_STAGE renderer settings '+json.dumps(device_info),flush=True)
 if args.inspect_only:
  print('SETTINGS_INSPECTION_OK',flush=True)

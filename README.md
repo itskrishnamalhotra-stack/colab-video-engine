@@ -67,6 +67,22 @@ about 56.9 seconds/frame. Resolution and sample budget are retained. Full-animat
 timing and finished motion quality remain unverified; reference parity is not claimed.
 Free GPU assignment and session limits depend on [Colab](https://research.google.com/colaboratory/faq.html).
 
+## EEVEE full-video option
+
+`Render_Fast.ipynb` starts a full EEVEE video with the same packed character,
+animation, meshes, textures, cameras, light objects and 1080x1920/30 fps output.
+It retains the soundtrack/captions and uses 64 temporal samples, full-resolution
+screen-space ray-tracing buffers, ray-trace denoising and jittered soft shadows.
+EEVEE is a different rendering algorithm; indirect lighting, reflections and
+subsurface appearance can differ from Cycles. It does not change the acting or
+remove frames. T4 speed/finished visual quality remain unverified.
+Requires a real NVIDIA OpenGL/EGL context; software rendering is refused and
+NVIDIA drivers are not installed/replaced. First-frame shader initialization
+can add time. Stop the previous render cell and keep the same runtime connected.
+Run this full-video option in that runtime by fetching its code as in the
+benchmark example below, substituting `Render_Fast.ipynb`. The resulting video
+is named `artist-rig-test-eevee.mp4`; its frame cache is separate from Cycles.
+
 ## GPU optimization benchmark
 
 `Benchmark_GPU.ipynb` renders only two full-resolution opening frames, in a new

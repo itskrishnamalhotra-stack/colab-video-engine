@@ -46,7 +46,7 @@ def prepare_snow(root,manifest):
    errors.append(detail)
  raise RuntimeError('Snow rig download failed at the configured mirrors: '+'; '.join(errors))
 
-def main(root,benchmark=False):
+def main(root,benchmark=False,renderer='cycles'):
  root=Path(root).resolve();root.mkdir(parents=True,exist_ok=True)
  previous=root/'process-status.json'
  if previous.is_file():
@@ -90,13 +90,15 @@ def main(root,benchmark=False):
   except Exception as error:errors.append(str(error))
  else:raise RuntimeError('Prepared scene download failed: '+'; '.join(errors))
  run_root=root/('benchmark-'+str(time.time_ns())) if benchmark else root
- frames=run_root/'frames' if benchmark else project/'renders'/('gpu-frames-optimized-v1-'+prepared['sha256'][:12]);frames.mkdir(parents=True,exist_ok=True)
- stage('rendering_gpu',note='OptiX preferred, persistent data and GPU OIDN when supported; original resolution and sample budget retained.')
+ profile='gpu-frames-eevee-v1-' if renderer=='eevee' else 'gpu-frames-optimized-v1-'
+ frames=run_root/'frames' if benchmark else project/'renders'/(profile+prepared['sha256'][:12]);frames.mkdir(parents=True,exist_ok=True)
+ stage('rendering_gpu',renderer=renderer,note='Original animation, scene geometry and output resolution retained. EEVEE uses a different lighting model from Cycles.')
  render_start=time.monotonic()
  from gpu_process_monitor import monitored_run
  command=[str(exe),'--background','--factory-startup','--enable-autoexec','--python-exit-code','1']
+ if renderer=='eevee':command+=['--gpu-backend','opengl']
  command+=['--debug-cycles'] if benchmark else []
- command+=['--python',str(root/'render_prepared.py'),'--','--project',str(project),'--frames',str(frames)]
+ command+=['--python',str(root/'render_prepared.py'),'--','--project',str(project),'--frames',str(frames),'--renderer',renderer]
  if benchmark:command+=['--benchmark','--cycles-print-stats']
  monitor=monitored_run(command,run_root)
  if benchmark:
@@ -106,7 +108,7 @@ def main(root,benchmark=False):
   print('GPU_BENCHMARK_READY '+json.dumps(report),flush=True)
   return status
  stage('encoding_mp4')
- outputs=root/'outputs';outputs.mkdir(exist_ok=True);output=outputs/(manifest['project']+'.mp4')
+ outputs=root/'outputs';outputs.mkdir(exist_ok=True);output=outputs/(manifest['project']+('-eevee' if renderer=='eevee' else '')+'.mp4')
  run(['ffmpeg','-v','error','-y','-framerate','30','-start_number','1','-i',str(frames/'frame_%04d.png'),
       '-i',str(project/'data/mix.wav'),'-vf','ass=filename=data/captions.ass:fontsdir=fonts',
       '-c:v','libx264','-preset','medium','-crf','18','-pix_fmt','yuv420p','-c:a','aac','-b:a','192k',
@@ -118,14 +120,17 @@ def main(root,benchmark=False):
  if abs(float(info['format']['duration'])-expected_duration)>.25:raise ValueError('Output duration is incorrect.')
  output.with_suffix('.verification.json').write_text(result)
  device=json.loads((project/'data/render-device.json').read_text())
- if device.get('requested_device') not in ('CUDA','OPTIX') or device.get('engine')!='CYCLES':raise ValueError('NVIDIA renderer verification failed.')
+ if renderer=='cycles':
+  if device.get('requested_device') not in ('CUDA','OPTIX') or device.get('engine')!='CYCLES':raise ValueError('NVIDIA renderer verification failed.')
+ else:
+  if device.get('engine')!='BLENDER_EEVEE' or 'NVIDIA' not in device.get('graphics',{}).get('vendor','').upper():raise ValueError('EEVEE NVIDIA graphics verification failed.')
  stage('complete',output=str(output),bytes=output.stat().st_size,sha256=sha(output),render_and_encode_seconds=round(time.monotonic()-render_start,2),renderer=device)
  print('GPU_VIDEO_READY',str(output),flush=True)
  return output
 
 if __name__=='__main__':
- parser=argparse.ArgumentParser();parser.add_argument('--root',default='/content/video_engine');parser.add_argument('--benchmark',action='store_true');args=parser.parse_args()
- try:main(args.root,args.benchmark)
+ parser=argparse.ArgumentParser();parser.add_argument('--root',default='/content/video_engine');parser.add_argument('--benchmark',action='store_true');parser.add_argument('--renderer',choices=['cycles','eevee'],default='cycles');args=parser.parse_args()
+ try:main(args.root,args.benchmark,args.renderer)
  except BaseException as e:
   root=Path(args.root);root.mkdir(parents=True,exist_ok=True)
   (root/'GPU_ERROR.txt').write_text('GPU RENDER FAILED\n\n'+str(e)+'\n\n'+traceback.format_exc(),encoding='utf-8')
