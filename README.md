@@ -64,6 +64,26 @@ This is a first production-rig performance test. CUDA speed and finished motion
 quality still require the live run; reference parity is not claimed.
 Free GPU assignment and session limits depend on [Colab](https://research.google.com/colaboratory/faq.html).
 
+## GPU optimization benchmark
+
+`Benchmark_GPU.ipynb` renders only two full-resolution opening frames, in a new
+folder, without changing the ongoing render's cached images. Stop the old render
+cell first and retain the same runtime. It tries OptiX (CUDA if unavailable),
+persistent render data and high-quality OpenImageDenoise on GPU when supported.
+The original 1080x1920, 64-sample cap, light paths, scene and animation are retained.
+The report includes native Cycles statistics, GPU utilization/power and frame
+timings. No full render starts automatically. The original measured CUDA baseline
+was approximately 56.9 seconds/frame on a Colab T4; optimization speed is unverified.
+
+To use the existing installed runtime, add a new cell after stopping the old job:
+
+```python
+import json, time, urllib.request
+url = "https://raw.githubusercontent.com/itskrishnamalhotra-stack/colab-video-engine/main/Benchmark_GPU.ipynb?update=" + str(time.time_ns())
+nb = json.loads(urllib.request.urlopen(url).read())
+exec("".join(next(c["source"] for c in nb["cells"] if c["cell_type"] == "code")))
+```
+
 ## Files
 
 - `Render.ipynb`: self-contained launch notebook.

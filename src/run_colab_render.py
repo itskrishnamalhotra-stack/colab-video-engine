@@ -46,9 +46,16 @@ def prepare_snow(root,manifest):
    errors.append(detail)
  raise RuntimeError('Snow rig download failed at the configured mirrors: '+'; '.join(errors))
 
-def main(root):
+def main(root,benchmark=False):
  root=Path(root).resolve();root.mkdir(parents=True,exist_ok=True)
- status=root/'gpu-status.json'
+ if benchmark:
+  previous=root/'process-status.json'
+  if previous.is_file():
+   old=json.loads(previous.read_text());pid=old.get('pid')
+   cmdline=Path(f'/proc/{pid}/cmdline')
+   if old.get('state')=='running' and cmdline.is_file() and b'blender' in cmdline.read_bytes().lower():
+    raise RuntimeError('The previous Blender render is still running. Stop its cell first; keep this runtime connected so installed files remain cached.')
+ status=root/('gpu-benchmark-status.json' if benchmark else 'gpu-status.json')
  def stage(name,**kw):
   status.write_text(json.dumps({'stage':name,'updated':time.time(),**kw},indent=2),encoding='utf-8')
   print('GPU_STAGE',name,flush=True)
@@ -83,12 +90,22 @@ def main(root):
    fetch(url,scene_file,prepared['sha256']);break
   except Exception as error:errors.append(str(error))
  else:raise RuntimeError('Prepared scene download failed: '+'; '.join(errors))
- frames=project/'renders/gpu-frames';frames.mkdir(parents=True,exist_ok=True)
+ run_root=root/('benchmark-'+str(time.time_ns())) if benchmark else root
+ frames=run_root/'frames' if benchmark else project/'renders/gpu-frames';frames.mkdir(parents=True,exist_ok=True)
  stage('rendering_cuda',note='Opening the packed scene; all scene construction and contact baking were completed locally.')
  render_start=time.monotonic()
  from gpu_process_monitor import monitored_run
- monitored_run([str(exe),'--background','--factory-startup','--enable-autoexec','--python-exit-code','1',
-      '--threads','4','--python',str(root/'render_prepared.py'),'--','--project',str(project),'--frames',str(frames)],root)
+ command=[str(exe),'--background','--factory-startup','--enable-autoexec','--python-exit-code','1']
+ command+=['--debug-cycles'] if benchmark else ['--threads','4']
+ command+=['--python',str(root/'render_prepared.py'),'--','--project',str(project),'--frames',str(frames)]
+ if benchmark:command+=['--benchmark','--cycles-print-stats']
+ monitor=monitored_run(command,run_root)
+ if benchmark:
+  report=json.loads((project/'data/gpu-benchmark.json').read_text())
+  report.update(total_process_seconds=monitor['elapsed_seconds'],native_log=str(run_root/'blender-native.log'),telemetry=str(run_root/'gpu-telemetry.jsonl'))
+  status.write_text(json.dumps(report,indent=2))
+  print('GPU_BENCHMARK_READY '+json.dumps(report),flush=True)
+  return status
  stage('encoding_mp4')
  outputs=root/'outputs';outputs.mkdir(exist_ok=True);output=outputs/(manifest['project']+'.mp4')
  run(['ffmpeg','-v','error','-y','-framerate','30','-start_number','1','-i',str(frames/'frame_%04d.png'),
@@ -108,8 +125,8 @@ def main(root):
  return output
 
 if __name__=='__main__':
- parser=argparse.ArgumentParser();parser.add_argument('--root',default='/content/video_engine');args=parser.parse_args()
- try:main(args.root)
+ parser=argparse.ArgumentParser();parser.add_argument('--root',default='/content/video_engine');parser.add_argument('--benchmark',action='store_true');args=parser.parse_args()
+ try:main(args.root,args.benchmark)
  except BaseException as e:
   root=Path(args.root);root.mkdir(parents=True,exist_ok=True)
   (root/'GPU_ERROR.txt').write_text('GPU RENDER FAILED\n\n'+str(e)+'\n\n'+traceback.format_exc(),encoding='utf-8')

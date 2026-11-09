@@ -88,15 +88,15 @@
     },
     {
       "path": "run_colab_render.py",
-      "sha256": "0fd3971a7040ff92a79a04344f43431491163e60cda193b0b81566fa8fd40f43"
+      "sha256": "8208f40571674bd8eb2cc3f13bf845981af2e2220b48794d6bd91604a8837abe"
     },
     {
       "path": "render_prepared.py",
-      "sha256": "203ccbfa3d277687d45561a187a5fb69e1c989da6198ba3fd144bff123881272"
+      "sha256": "10f146cdbd95457c44c54e9938b7208200e1bbbdd44c175f818f9d012884ab27"
     },
     {
       "path": "gpu_process_monitor.py",
-      "sha256": "c27cbfb2f5df7f79a0b5497838d26ae4a2f69c83222f5e1b08090498618aaf3f"
+      "sha256": "8046feccced7b0a4b4441d409ccf53d8a52a838367244ffe3dee1225591c4709"
     }
   ]
 }

@@ -2,6 +2,15 @@
 import collections,json,os,subprocess,time
 from pathlib import Path
 
+def gpu_state():
+ try:
+  result=subprocess.run(['nvidia-smi','--query-gpu=index,name,utilization.gpu,utilization.memory,memory.used,memory.total,power.draw,power.limit',
+                         '--format=csv,noheader,nounits'],capture_output=True,text=True,timeout=3)
+  if result.returncode:return {'unavailable':True}
+  keys=['index','name','gpu_util_percent','memory_interface_util_percent','memory_used_mib','memory_total_mib','power_w','power_limit_w']
+  return [dict(zip(keys,[x.strip() for x in line.split(',')])) for line in result.stdout.splitlines() if line.strip()]
+ except (OSError,subprocess.TimeoutExpired):return {'unavailable':True}
+
 def memory_state():
  result={}
  for name in ['memory.current','memory.peak','memory.max','memory.events']:
@@ -27,13 +36,15 @@ def monitored_run(command,root,heartbeat_seconds=15):
     reader.seek(offset)
     for line in reader:
      text=line.decode('utf-8',errors='replace').rstrip()
-     if text.startswith(('BUILD_STAGE','FRAME_PROGRESS','BLENDER_FRAMES_COMPLETE')):print(text,flush=True)
+     if text.startswith(('BUILD_STAGE','FRAME_PROGRESS','FRAME_STARTED','FRAME_TIMING','FRAME_RENDER_SECONDS','GPU_BENCHMARK','BLENDER_FRAMES_COMPLETE')):print(text,flush=True)
     offset=reader.tell()
    code=proc.poll();state.update(updated=time.time(),elapsed_seconds=round(time.time()-started,1),memory=memory_state())
    if code is not None:
     state.update(state='complete' if code==0 else 'failed',returncode=code);write(state);break
-   write(state)
-   print('JOB_HEARTBEAT',json.dumps({'child_pid':proc.pid,'alive':True,'elapsed_seconds':state['elapsed_seconds'],'memory':state['memory']}),flush=True)
+   state['gpu']=gpu_state();write(state)
+   with (root/'gpu-telemetry.jsonl').open('a',encoding='utf-8') as telemetry:
+    telemetry.write(json.dumps({'time':state['updated'],'elapsed_seconds':state['elapsed_seconds'],'gpu':state['gpu']})+'\n')
+   print('JOB_HEARTBEAT',json.dumps({'child_pid':proc.pid,'alive':True,'elapsed_seconds':state['elapsed_seconds'],'memory':state['memory'],'gpu':state['gpu']}),flush=True)
    try:proc.wait(timeout=heartbeat_seconds)
    except subprocess.TimeoutExpired:pass
  if code:
