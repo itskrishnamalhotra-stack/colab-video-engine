@@ -2,6 +2,10 @@
   "project": "artist-rig-test",
   "snow_archive_sha256": "fbc5a6fe43a4c38a10eceeb6e1b283d79e2589e5429e2d94e35dfed26635b712",
   "character_credit": "Snow Rig \u00a9 Blender Foundation | studio.blender.org",
+  "snow_archive_urls": [
+    "https://github.com/itskrishnamalhotra-stack/colab-video-engine/releases/download/render-assets-v1/snow-v2.zip",
+    "https://api.github.com/repos/itskrishnamalhotra-stack/colab-video-engine/releases/assets/728737444"
+  ],
   "files": [
     {
       "path": "projects/artist-rig-test/build_scene.py",
@@ -65,7 +69,7 @@
     },
     {
       "path": "run_colab_render.py",
-      "sha256": "21f9eab810c16e1a24ee826a0744646315d9e8435e0713b1e17ecfdf285595b4"
+      "sha256": "4ccb385f0398d7f72cfe8f2ff3dabd1cb95ad6a6d4a215b85a0d13fbdd8a4cfb"
     }
   ]
 }

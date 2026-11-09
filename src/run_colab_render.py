@@ -2,18 +2,19 @@
 The notebook route runs interactively. An optional external bridge requires an
 eligible paid Colab runtime with positive compute units under Colab's rules.
 """
-import argparse,hashlib,html,json,os,re,shutil,subprocess,sys,tarfile,time,traceback,urllib.request,zipfile
+import argparse,ctypes.util,hashlib,json,os,shutil,subprocess,sys,tarfile,time,traceback,urllib.request,zipfile
 from pathlib import Path
 
 def sha(path):
  with Path(path).open('rb') as f:return hashlib.file_digest(f,'sha256').hexdigest()
 
-def fetch(url,path):
+def fetch(url,path,expected_sha256=None):
  path=Path(path);path.parent.mkdir(parents=True,exist_ok=True)
- if path.is_file():return
+ if path.is_file() and (expected_sha256 is None or sha(path)==expected_sha256):return
  temporary=path.with_suffix(path.suffix+'.part')
- req=urllib.request.Request(url,headers={'User-Agent':'VideoEngine/1.0'})
+ req=urllib.request.Request(url,headers={'User-Agent':'VideoEngine/1.0','Accept':'application/octet-stream'})
  with urllib.request.urlopen(req,timeout=180) as r,temporary.open('wb') as f:shutil.copyfileobj(r,f)
+ if expected_sha256 is not None and sha(temporary)!=expected_sha256:raise ValueError('Downloaded asset failed SHA-256 verification.')
  temporary.replace(path)
 
 def unpack_zip(archive,destination):
@@ -26,6 +27,24 @@ def unpack_zip(archive,destination):
 def run(command,**kw):
  print('RUN',command[0],flush=True)
  return subprocess.run(command,check=True,**kw)
+
+def prepare_snow(root,manifest):
+ root=Path(root);asset=root/'assets/blender-studio/snow-v2'
+ if (asset/'snow_v02.blend').is_file():return asset
+ urls=manifest.get('snow_archive_urls',[])
+ if not urls:raise RuntimeError('This project has no direct Snow asset URL. Reopen the updated notebook.')
+ snow=root/'assets/blender-studio/snow-v2.zip';errors=[]
+ for url in urls:
+  try:
+   fetch(url,snow,manifest['snow_archive_sha256'])
+   unpack_zip(snow,asset)
+   if not (asset/'snow_v02.blend').is_file():raise ValueError('Verified Snow archive did not contain its rig.')
+   print('SNOW_ASSET_VERIFIED',manifest['snow_archive_sha256'],flush=True)
+   return asset
+  except Exception as error:
+   detail=f'HTTP {error.code}' if hasattr(error,'code') else str(error)
+   errors.append(detail)
+ raise RuntimeError('Snow rig download failed at the configured mirrors: '+'; '.join(errors))
 
 def main(root):
  root=Path(root).resolve();root.mkdir(parents=True,exist_ok=True)
@@ -47,24 +66,16 @@ def main(root):
  expected=next(line.split()[0] for line in sums.splitlines() if line.strip().endswith(name))
  archive=tools/name;exe=tools/name[:-7]/'blender'
  if not exe.is_file():
-  fetch(base+name,archive)
+  fetch(base+name,archive,expected)
   if sha(archive)!=expected:raise ValueError('Blender does not match the publisher SHA-256.')
   with tarfile.open(archive) as tar:tar.extractall(tools,filter='data')
  if not exe.is_file():raise FileNotFoundError('Blender extraction did not produce the executable.')
  # Shared libraries only. Never replace Google's NVIDIA driver or kernel stack.
- run(['apt-get','-qq','update'],stdout=subprocess.DEVNULL)
- run(['apt-get','-qq','install','-y','libxrender1','libxi6','libxkbcommon0','libsm6','libgl1','libegl1','ffmpeg'],stdout=subprocess.DEVNULL)
+ if not all(ctypes.util.find_library(n) for n in ['Xrender','Xi','xkbcommon','SM','GL','EGL']) or not all(shutil.which(n) for n in ['ffmpeg','ffprobe']):
+  run(['apt-get','-qq','update'],stdout=subprocess.DEVNULL)
+  run(['apt-get','-qq','install','-y','libxrender1','libxi6','libxkbcommon0','libsm6','libgl1','libegl1','ffmpeg'],stdout=subprocess.DEVNULL)
  stage('preparing_snow_rig')
- asset=root/'assets/blender-studio/snow-v2'
- if not (asset/'snow_v02.blend').is_file():
-  page='https://studio.blender.org/characters/snow/v2/'
-  source=urllib.request.urlopen(page,timeout=60).read().decode()
-  links=re.findall(r'href=[\"\']([^\"\']+)',source)
-  route=next(x for x in links if x.startswith('/download-source/') and '.zip' in x)
-  snow=root/'assets/blender-studio/snow-v2.zip'
-  fetch('https://studio.blender.org'+html.unescape(route),snow)
-  if sha(snow)!=manifest['snow_archive_sha256']:raise ValueError('Snow download changed; expected the inspected v2 asset.')
-  unpack_zip(snow,asset)
+ prepare_snow(root,manifest)
  frames=project/'renders/gpu-frames';frames.mkdir(parents=True,exist_ok=True)
  stage('rendering_cuda',note='The scene checks CUDA devices and stops if GPU selection fails.')
  render_start=time.monotonic()

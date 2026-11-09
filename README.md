@@ -18,6 +18,20 @@ The MP4 previews inline and is linked in the output; it is also under
 `/kaggle/working/video_engine/outputs`. A failed render produces a downloadable
 error report. Native CUDA rendering on Kaggle still requires its first live test.
 
+### Retry in an existing Kaggle session
+
+The reported Snow-page HTTP 403 is addressed by a hash-verified, unmodified
+Snow v2 archive on [our attributed release mirror](https://github.com/itskrishnamalhotra-stack/colab-video-engine/releases/tag/render-assets-v1).
+The runtime no longer scrapes Blender Studio's page. Add a new cell below to
+load the latest launcher while retaining the installed Blender and asset caches:
+
+```python
+import json, time, urllib.request
+url = "https://raw.githubusercontent.com/itskrishnamalhotra-stack/colab-video-engine/main/Render_Kaggle.ipynb?update=" + str(time.time_ns())
+nb = json.loads(urllib.request.urlopen(url).read())
+exec("".join(next(c["source"] for c in nb["cells"] if c["cell_type"] == "code")))
+```
+
 ## Colab
 
 Open the link, choose an available NVIDIA GPU, and Run all. The prepared scene,
@@ -53,5 +67,7 @@ and directed animation; this launch link automates execution of the prepared pro
 Snow Rig © Blender Foundation | studio.blender.org — [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 [Official character](https://studio.blender.org/characters/snow/v2/).
 Original set, staging and animation code are included. Narrator: Kokoro Heart (`af_heart`).
-The character and Blender binaries download from their publishers; they are not committed here.
+Blender downloads from its publisher. The unmodified Snow archive is distributed
+through the attributed GitHub Release above, verified against the inspected original's SHA-256.
+Large binary dependencies are not stored in Git history.
 No connector credentials, local authentication files, model weights or reference video are included.
