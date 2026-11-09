@@ -46,9 +46,9 @@ def prepare_snow(root,manifest):
    errors.append(detail)
  raise RuntimeError('Snow rig download failed at the configured mirrors: '+'; '.join(errors))
 
-def main(root,benchmark=False,renderer='cycles',parallel_auto=False):
+def main(root,benchmark=False,renderer='cycles',parallel_auto=False,parallel_workers=None):
  root=Path(root).resolve();root.mkdir(parents=True,exist_ok=True)
- if parallel_auto and (benchmark or renderer!='eevee'):raise ValueError('Automatic parallel rendering is supported only for the full EEVEE video.')
+ if (parallel_auto or parallel_workers is not None) and (benchmark or renderer!='eevee'):raise ValueError('Parallel rendering is supported only for the full EEVEE video.')
  previous=root/'process-status.json'
  if previous.is_file():
   old=json.loads(previous.read_text());pid=old.get('pid')
@@ -107,14 +107,14 @@ def main(root,benchmark=False,renderer='cycles',parallel_auto=False):
  command+=['--debug-cycles'] if benchmark else []
  command+=['--python',str(root/'render_prepared.py'),'--','--project',str(project),'--frames',str(frames),'--renderer',renderer]
  if benchmark:command+=['--benchmark','--cycles-print-stats']
- if parallel_auto:
+ if parallel_auto or parallel_workers is not None:
   from parallel_blender_render import measured_baseline,render_auto_parallel
   frame_count=prepared['source_metadata']['frames'] if 'source_metadata' in prepared else None
   if frame_count is None:
    # The scene acquisition record may use the checked metadata under its original key.
    frame_count=json.loads((project/'data/lines.json').read_text())['duration']*30
   frame_count=round(frame_count)
-  render_auto_parallel(command,run_root,frames,1,frame_count,env=render_env,baseline_seconds=measured_baseline(root))
+  render_auto_parallel(command,run_root,frames,1,frame_count,env=render_env,baseline_seconds=measured_baseline(root),fixed_workers=parallel_workers)
  else:monitor=monitored_run(command,run_root,env=render_env)
  if benchmark:
   report=json.loads((project/'data/gpu-benchmark.json').read_text())
@@ -144,8 +144,8 @@ def main(root,benchmark=False,renderer='cycles',parallel_auto=False):
  return output
 
 if __name__=='__main__':
- parser=argparse.ArgumentParser();parser.add_argument('--root',default='/content/video_engine');parser.add_argument('--benchmark',action='store_true');parser.add_argument('--renderer',choices=['cycles','eevee'],default='cycles');parser.add_argument('--parallel-auto',action='store_true');args=parser.parse_args()
- try:main(args.root,args.benchmark,args.renderer,args.parallel_auto)
+ parser=argparse.ArgumentParser();parser.add_argument('--root',default='/content/video_engine');parser.add_argument('--benchmark',action='store_true');parser.add_argument('--renderer',choices=['cycles','eevee'],default='cycles');parser.add_argument('--parallel-auto',action='store_true');parser.add_argument('--parallel-workers',type=int,choices=[1,2]);args=parser.parse_args()
+ try:main(args.root,args.benchmark,args.renderer,args.parallel_auto,args.parallel_workers)
  except BaseException as e:
   root=Path(args.root);root.mkdir(parents=True,exist_ok=True)
   (root/'GPU_ERROR.txt').write_text('GPU RENDER FAILED\n\n'+str(e)+'\n\n'+traceback.format_exc(),encoding='utf-8')

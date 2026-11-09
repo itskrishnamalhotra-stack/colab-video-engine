@@ -1,7 +1,9 @@
 """Blender GPU tail: packed scene, OptiX preferred, persistent data and GPU OIDN."""
-import argparse,hashlib,json,os,struct,sys,time
+import argparse,hashlib,json,os,sys,time
 from pathlib import Path
+sys.path.insert(0,str(Path(__file__).resolve().parent))
 import bpy
+from frame_cache import valid_png,clean_owned_frames
 
 parser=argparse.ArgumentParser();parser.add_argument('--project',required=True);parser.add_argument('--frames',required=True)
 parser.add_argument('--benchmark',action='store_true',help='Only two full-quality frames with GPU optimizations; no final video.')
@@ -72,18 +74,12 @@ requested_first=args.frame_start if args.frame_start is not None else scene.fram
 requested_last=args.frame_end if args.frame_end is not None else scene.frame_end
 if not scene.frame_start<=requested_first<=requested_last<=scene.frame_end:raise ValueError('Assigned frames are outside the prepared animation.')
 print('BUILD_STAGE assigned frame window '+json.dumps({'first':requested_first,'last':requested_last,'worker':args.worker_id or 'single'}),flush=True)
+print('BUILD_STAGE worker process '+json.dumps({'pid':os.getpid(),'worker':args.worker_id or 'single','loads_scene_once':True}),flush=True)
 if args.inspect_only:
  print('SETTINGS_INSPECTION_OK',flush=True)
  raise SystemExit(0)
 (project/('data/benchmark-device.json' if args.benchmark else 'data/render-device.json')).write_text(json.dumps(device_info,indent=2))
 print('BUILD_STAGE verified '+backend+' devices: '+', '.join(devices),flush=True)
-
-def valid_png(path):
- try:
-  with path.open('rb') as f:
-   header=f.read(24);f.seek(-12,2);end=f.read(12)
-  return header[:8]==b'\x89PNG\r\n\x1a\n' and struct.unpack('>II',header[16:24])==(1080,1920) and end==b'\x00\x00\x00\x00IEND\xaeB`\x82'
- except (OSError,ValueError,struct.error):return False
 
 first=scene.frame_start;last=scene.frame_end
 if args.benchmark:
@@ -98,8 +94,8 @@ else:
   if json.loads(marker.read_text())!=cache_config:raise RuntimeError('Cached frame settings differ. Use a fresh frames folder for this render configuration.')
  elif any(frames.glob('frame_*.png')):raise RuntimeError('Cached frames have no settings record. Use a fresh frames folder.')
  temporary=marker.with_suffix(f'.{os.getpid()}.tmp');temporary.write_text(json.dumps(cache_config,indent=2));temporary.replace(marker)
-for path in frames.glob('frame_*.png'):
- if not valid_png(path):path.unlink() # Only incomplete renderer-owned PNGs in this exact frames folder.
+# Other live workers may be writing files outside this assigned range.
+clean_owned_frames(frames,requested_first,requested_last)
 cached=sum(valid_png(frames/f'frame_{f:04d}.png') for f in range(first,last+1))
 progress_path=project/'data/render-progress.json'
 if args.worker_id:

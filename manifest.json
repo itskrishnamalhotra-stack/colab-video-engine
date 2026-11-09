@@ -88,11 +88,11 @@
     },
     {
       "path": "run_colab_render.py",
-      "sha256": "cd998d9cbcf61546bf8ca59eca924be0583f058f1e1c746f56f054816bbe9621"
+      "sha256": "7feae4df5f2567f3bc51654388933e650ac0bbbe9e81a488b7b1324b4979e60f"
     },
     {
       "path": "render_prepared.py",
-      "sha256": "a39c670463ae054d34bedd30ee2ced67fde55376c1676948155b68a429d9ad28"
+      "sha256": "073a633ab2e03cc0ca68ce089f5506e22a25b61ce167ed30bde925d473e5594a"
     },
     {
       "path": "gpu_process_monitor.py",
@@ -104,7 +104,11 @@
     },
     {
       "path": "parallel_blender_render.py",
-      "sha256": "d3160ade5f8083c258f30155643113940fd7e8ea7894e04924e36820b5e3daf3"
+      "sha256": "eb886377d6457cbe6e192d7b93e975b56e19bb88122b4b9edca089c8c52fec77"
+    },
+    {
+      "path": "frame_cache.py",
+      "sha256": "708debef990f5f52b4663ad64f1f4f529c3846bd6e55e1dea3f4a53933684c26"
     }
   ]
 }

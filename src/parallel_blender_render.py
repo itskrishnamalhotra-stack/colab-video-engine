@@ -1,14 +1,8 @@
 """Bounded two-worker throughput trial, then render remaining frames automatically."""
-import concurrent.futures,json,os,statistics,struct,threading,time
+import concurrent.futures,json,os,statistics,threading,time
 from pathlib import Path
 from gpu_process_monitor import monitored_run
-
-def valid_png(path):
- try:
-  with path.open('rb') as stream:
-   header=stream.read(24);stream.seek(-12,2);end=stream.read(12)
-  return header[:8]==b'\x89PNG\r\n\x1a\n' and struct.unpack('>II',header[16:24])==(1080,1920) and end==b'\x00\x00\x00\x00IEND\xaeB`\x82'
- except (OSError,ValueError,struct.error):return False
+from frame_cache import valid_png
 
 def measured_baseline(root):
  path=Path(root)/'renderer.log'
@@ -22,7 +16,8 @@ def measured_baseline(root):
   except (ValueError,KeyError,TypeError):pass
  return statistics.median(timings[-9:]) if len(timings)>=2 else None
 
-def render_auto_parallel(command,root,frames,first,last,env=None,baseline_seconds=None,heartbeat_seconds=15):
+def render_auto_parallel(command,root,frames,first,last,env=None,baseline_seconds=None,heartbeat_seconds=15,fixed_workers=None):
+ if fixed_workers not in (None,1,2):raise ValueError('At most two fixed workers are supported.')
  root=Path(root);frames=Path(frames)
  work=root/('parallel-'+str(time.time_ns()));work.mkdir(parents=True)
  status=root/'process-status.json';report_path=root/'parallel-status.json'
@@ -57,6 +52,13 @@ def render_auto_parallel(command,root,frames,first,last,env=None,baseline_second
  save()
  try:
   todo=missing()
+  if fixed_workers is not None:
+   chosen=min(fixed_workers,len(todo)) if todo else 0
+   report.update(mode='fixed_persistent_workers',selected_workers=chosen,reason='Each Blender process loads once and renders its entire assigned range; no trial or worker relaunch.')
+   save();print('BUILD_STAGE parallel selection '+json.dumps(report),flush=True)
+   if todo:pool(ranges(todo,chosen),'persistent')
+   if missing():raise RuntimeError('Missing or incomplete frames remain after the persistent workers finished.')
+   report.update(state='complete',completed_frames=last-first+1);save();return report
   if len(todo)<4:
    if todo:pool(ranges(todo,1),'finish')
    report.update(state='complete',selected_workers=1,reason='Fewer than four frames remain.');save();return report
