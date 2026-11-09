@@ -18,6 +18,21 @@ The MP4 previews inline and is linked in the output; it is also under
 `/kaggle/working/video_engine/outputs`. A failed render produces a downloadable
 error report. Native CUDA rendering on Kaggle still requires its first live test.
 
+For a saved background execution, choose **Save Version → Save & Run All** on a
+clean copy of this notebook. This is Kaggle's separate batch session, with saved
+logs and outputs after completion. A batch run executes every cell in order, so
+exclude the earlier failed launchers. For interactive work, the optional
+**Persistence → Files only** setting retains working files between supported
+session restarts. Neither option guarantees recovery after a platform failure.
+See [Kaggle's notebook documentation](https://www.kaggle.com/docs/notebooks).
+
+The cloud runtime opens a fully prepared, packed `.blend` scene. Set creation,
+rig pose authoring and per-frame prop baking happen locally before publishing.
+The GPU job downloads/verifies the scene, selects CUDA, and renders missing
+complete PNGs. Native exit codes, memory counters and the full Blender log are
+recorded separately; a heartbeat reports process state every 15 seconds. No OOM
+diagnosis is inferred solely from a missing session.
+
 ### Retry in an existing Kaggle session
 
 The reported Snow-page HTTP 403 is addressed by a hash-verified, unmodified
@@ -39,7 +54,7 @@ Heart narration, word captions, music and effects are embedded in the notebook.
 No manual file upload, Git clone, runtime token, Drive mount or external bridge is needed.
 The repository is public, so no private-repository GitHub authorization is needed.
 
-The first run downloads official Blender 5.2.3 and Blender Studio Snow v2, checks
+The first run downloads official Blender 5.2.3 and the prepared scene, checks
 their hashes, selects native CUDA rendering, encodes/validates the MP4, previews
 it and downloads it. A failed run downloads a diagnostic report instead.
 Send the video or report back to the chat. No output is automatically published.

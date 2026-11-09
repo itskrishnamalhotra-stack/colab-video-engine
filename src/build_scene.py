@@ -11,6 +11,7 @@ from mathutils import Vector,Matrix,Quaternion
 args=argparse.ArgumentParser()
 args.add_argument('--project',required=True);args.add_argument('--frames',required=True)
 args.add_argument('--probe',action='store_true')
+args.add_argument('--prepare-only',action='store_true',help='Bake contacts and save a packed scene without rendering.')
 args.add_argument('--device',choices=['EEVEE','CUDA'],default='EEVEE')
 opt=args.parse_args(sys.argv[sys.argv.index('--')+1:])
 P=Path(opt.project);OUT=Path(opt.frames);OUT.mkdir(parents=True,exist_ok=True)
@@ -324,13 +325,22 @@ def update_cookie(frame):
 # Save an editable, self-contained scene with external original texture references.
 for frame in range(1,N+1):
  update_cookie(frame);cookie.keyframe_insert('location',frame=frame);cookie.keyframe_insert('rotation_euler',frame=frame)
+ if frame==1 or frame%30==0:stage(f'baked prop contacts {frame}/{N}')
 for fc in curves(cookie.animation_data.action):
  for k in fc.keyframe_points:k.interpolation='LINEAR'
 scene.frame_set(1)
 faulthandler.cancel_dump_traceback_later()
-bpy.ops.wm.save_as_mainfile(filepath=str(P/'scene.blend'))
+if opt.prepare_only:
+ stage('packing scene resources')
+ bpy.ops.file.pack_all()
+ scene_file=P/'prepared-scene.blend'
+ bpy.ops.wm.save_as_mainfile(filepath=str(scene_file),compress=True)
+ (P/'prepared-scene.json').write_text(json.dumps({'scene':scene_file.name,'frames':N,'duration':DUR,'blender':bpy.app.version_string,'packed':True},indent=2))
+else:bpy.ops.wm.save_as_mainfile(filepath=str(P/'scene.blend'))
 stage('editable scene saved')
-if opt.probe:
+if opt.prepare_only:
+ print('SCENE_PREPARED',str(scene_file),flush=True)
+elif opt.probe:
  frame=F(lift+.3);update_cookie(frame)
  scene.camera=face;scene.render.resolution_percentage=50
  scene.render.filepath=str(OUT/'rig-compatibility.png')

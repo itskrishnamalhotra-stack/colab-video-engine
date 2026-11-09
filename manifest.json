@@ -2,6 +2,21 @@
   "project": "artist-rig-test",
   "snow_archive_sha256": "fbc5a6fe43a4c38a10eceeb6e1b283d79e2589e5429e2d94e35dfed26635b712",
   "character_credit": "Snow Rig \u00a9 Blender Foundation | studio.blender.org",
+  "prepared_scene": {
+    "name": "last-cookie-scene-be7344c3582f.blend",
+    "url": "https://github.com/itskrishnamalhotra-stack/colab-video-engine/releases/download/render-assets-v1/last-cookie-scene-be7344c3582f.blend",
+    "api_url": "https://api.github.com/repos/itskrishnamalhotra-stack/colab-video-engine/releases/assets/729066137",
+    "sha256": "be7344c3582f123e4cb10fcf80e912d41468e39b750fb12f2092048a9282ffdb",
+    "bytes": 110831344,
+    "source_metadata": {
+      "scene": "prepared-scene.blend",
+      "frames": 222,
+      "duration": 7.405,
+      "blender": "5.2.3 LTS",
+      "packed": true
+    },
+    "credit": "Snow Rig \u00a9 Blender Foundation | studio.blender.org \u2014 CC BY 4.0; original scene and animation added."
+  },
   "snow_archive_urls": [
     "https://github.com/itskrishnamalhotra-stack/colab-video-engine/releases/download/render-assets-v1/snow-v2.zip",
     "https://api.github.com/repos/itskrishnamalhotra-stack/colab-video-engine/releases/assets/728737444"
@@ -9,7 +24,7 @@
   "files": [
     {
       "path": "projects/artist-rig-test/build_scene.py",
-      "sha256": "bb9129ee5dc5e465c401bff8286a1c61048e53f812f9ff7164a5f92be88b8a1c"
+      "sha256": "9c4eb7a255f535fe15f5adb5d1e60808b50f116affe02f8bf352acbd0355620c"
     },
     {
       "path": "projects/artist-rig-test/script.json",
@@ -38,6 +53,10 @@
     {
       "path": "projects/artist-rig-test/data/narration.wav",
       "sha256": "bf7bd641bfe972727f0930f90d7c54a5a99e85b4df6594f0f0e30400956606e5"
+    },
+    {
+      "path": "projects/artist-rig-test/data/render-device.json",
+      "sha256": "236cb6189e6c96a27dfa19f2db7b1b54dbf7b6a48106d3792b54556dd8a0d5b6"
     },
     {
       "path": "projects/artist-rig-test/data/words.json",
@@ -69,7 +88,15 @@
     },
     {
       "path": "run_colab_render.py",
-      "sha256": "4ccb385f0398d7f72cfe8f2ff3dabd1cb95ad6a6d4a215b85a0d13fbdd8a4cfb"
+      "sha256": "0fd3971a7040ff92a79a04344f43431491163e60cda193b0b81566fa8fd40f43"
+    },
+    {
+      "path": "render_prepared.py",
+      "sha256": "203ccbfa3d277687d45561a187a5fb69e1c989da6198ba3fd144bff123881272"
+    },
+    {
+      "path": "gpu_process_monitor.py",
+      "sha256": "c27cbfb2f5df7f79a0b5497838d26ae4a2f69c83222f5e1b08090498618aaf3f"
     }
   ]
 }

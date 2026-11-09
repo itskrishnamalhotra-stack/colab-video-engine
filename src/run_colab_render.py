@@ -74,13 +74,21 @@ def main(root):
  if not all(ctypes.util.find_library(n) for n in ['Xrender','Xi','xkbcommon','SM','GL','EGL']) or not all(shutil.which(n) for n in ['ffmpeg','ffprobe']):
   run(['apt-get','-qq','update'],stdout=subprocess.DEVNULL)
   run(['apt-get','-qq','install','-y','libxrender1','libxi6','libxkbcommon0','libsm6','libgl1','libegl1','ffmpeg'],stdout=subprocess.DEVNULL)
- stage('preparing_snow_rig')
- prepare_snow(root,manifest)
+ prepared=manifest.get('prepared_scene')
+ if not prepared:raise RuntimeError('Outdated bundle: the packed animation scene is missing. Open the latest notebook.')
+ stage('downloading_prepared_scene')
+ scene_file=project/'prepared-scene.blend';errors=[]
+ for url in [prepared['url'],prepared['api_url']]:
+  try:
+   fetch(url,scene_file,prepared['sha256']);break
+  except Exception as error:errors.append(str(error))
+ else:raise RuntimeError('Prepared scene download failed: '+'; '.join(errors))
  frames=project/'renders/gpu-frames';frames.mkdir(parents=True,exist_ok=True)
- stage('rendering_cuda',note='The scene checks CUDA devices and stops if GPU selection fails.')
+ stage('rendering_cuda',note='Opening the packed scene; all scene construction and contact baking were completed locally.')
  render_start=time.monotonic()
- run([str(exe),'--background','--factory-startup','--enable-autoexec','--python-exit-code','1',
-      '--threads','4','--python',str(project/'build_scene.py'),'--','--project',str(project),'--frames',str(frames),'--device','CUDA'])
+ from gpu_process_monitor import monitored_run
+ monitored_run([str(exe),'--background','--factory-startup','--enable-autoexec','--python-exit-code','1',
+      '--threads','4','--python',str(root/'render_prepared.py'),'--','--project',str(project),'--frames',str(frames)],root)
  stage('encoding_mp4')
  outputs=root/'outputs';outputs.mkdir(exist_ok=True);output=outputs/(manifest['project']+'.mp4')
  run(['ffmpeg','-v','error','-y','-framerate','30','-start_number','1','-i',str(frames/'frame_%04d.png'),
