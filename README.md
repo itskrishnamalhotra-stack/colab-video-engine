@@ -69,6 +69,16 @@ Free GPU assignment and session limits depend on [Colab](https://research.google
 
 ## EEVEE full-video option
 
+`Render_Parallel.ipynb` adds bounded automatic two-worker throughput selection to
+the same EEVEE settings. Stop the old cell first, keep the runtime connected, and
+run the new notebook code in that same runtime. Valid completed frames are reused.
+Recent serial timing is read from the retained renderer.log; four unfinished frames
+are split between two workers and count toward the final output. Two workers finish
+the remainder only if combined throughput beats serial by at least 15%; otherwise
+one worker finishes automatically. If no serial baseline exists, a four-frame
+serial calibration first establishes it. Scene/settings caches remain identical.
+Memory use alone does not establish a gain. The parallel T4 speed remains unverified.
+
 `Render_Fast.ipynb` starts a full EEVEE video with the same packed character,
 animation, meshes, textures, cameras, light objects and 1080x1920/30 fps output.
 It retains the soundtrack/captions and uses 64 temporal samples, full-resolution

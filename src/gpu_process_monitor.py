@@ -20,7 +20,7 @@ def memory_state():
    result[name]=dict(line.split() for line in text.splitlines()) if name=='memory.events' else text
  return result
 
-def monitored_run(command,root,heartbeat_seconds=15,env=None):
+def monitored_run(command,root,heartbeat_seconds=15,env=None,cancel_event=None,label=None):
  root=Path(root);root.mkdir(parents=True,exist_ok=True)
  state_path=root/'process-status.json';log=root/'blender-native.log'
  before=memory_state();started=time.time()
@@ -32,11 +32,18 @@ def monitored_run(command,root,heartbeat_seconds=15,env=None):
   write(state)
   offset=0
   while True:
+   if cancel_event is not None and cancel_event.is_set() and proc.poll() is None:
+    proc.terminate()
+    try:proc.wait(timeout=5)
+    except subprocess.TimeoutExpired:proc.kill();proc.wait()
    with log.open('rb') as reader:
     reader.seek(offset)
     for line in reader:
      text=line.decode('utf-8',errors='replace').rstrip()
-     if text.startswith(('BUILD_STAGE','FRAME_PROGRESS','FRAME_STARTED','FRAME_TIMING','FRAME_RENDER_SECONDS','GPU_BENCHMARK','BLENDER_FRAMES_COMPLETE')):print(text,flush=True)
+     if text.startswith(('BUILD_STAGE','FRAME_PROGRESS','FRAME_STARTED','FRAME_TIMING','FRAME_RENDER_SECONDS','GPU_BENCHMARK','BLENDER_FRAMES_COMPLETE')):
+      if label:
+       tag,_,detail=text.partition(' ');print(tag+' ['+label+'] '+detail,flush=True)
+      else:print(text,flush=True)
     offset=reader.tell()
    code=proc.poll();state.update(updated=time.time(),elapsed_seconds=round(time.time()-started,1),memory=memory_state())
    if code is not None:

@@ -46,13 +46,15 @@ def prepare_snow(root,manifest):
    errors.append(detail)
  raise RuntimeError('Snow rig download failed at the configured mirrors: '+'; '.join(errors))
 
-def main(root,benchmark=False,renderer='cycles'):
+def main(root,benchmark=False,renderer='cycles',parallel_auto=False):
  root=Path(root).resolve();root.mkdir(parents=True,exist_ok=True)
+ if parallel_auto and (benchmark or renderer!='eevee'):raise ValueError('Automatic parallel rendering is supported only for the full EEVEE video.')
  previous=root/'process-status.json'
  if previous.is_file():
   old=json.loads(previous.read_text());pid=old.get('pid')
   cmdline=Path(f'/proc/{pid}/cmdline')
-  if old.get('state')=='running' and cmdline.is_file() and b'blender' in cmdline.read_bytes().lower():
+  active_command=cmdline.read_bytes().lower() if cmdline.is_file() else b''
+  if old.get('state')=='running' and (b'blender' in active_command or (old.get('kind')=='parallel_controller' and b'run_colab_render.py' in active_command)):
    raise RuntimeError('The previous Blender render is still running. Stop its cell first; keep this runtime connected so installed files remain cached.')
  status=root/('gpu-benchmark-status.json' if benchmark else 'gpu-status.json')
  def stage(name,**kw):
@@ -105,7 +107,15 @@ def main(root,benchmark=False,renderer='cycles'):
  command+=['--debug-cycles'] if benchmark else []
  command+=['--python',str(root/'render_prepared.py'),'--','--project',str(project),'--frames',str(frames),'--renderer',renderer]
  if benchmark:command+=['--benchmark','--cycles-print-stats']
- monitor=monitored_run(command,run_root,env=render_env)
+ if parallel_auto:
+  from parallel_blender_render import measured_baseline,render_auto_parallel
+  frame_count=prepared['source_metadata']['frames'] if 'source_metadata' in prepared else None
+  if frame_count is None:
+   # The scene acquisition record may use the checked metadata under its original key.
+   frame_count=json.loads((project/'data/lines.json').read_text())['duration']*30
+  frame_count=round(frame_count)
+  render_auto_parallel(command,run_root,frames,1,frame_count,env=render_env,baseline_seconds=measured_baseline(root))
+ else:monitor=monitored_run(command,run_root,env=render_env)
  if benchmark:
   report=json.loads((project/'data/gpu-benchmark.json').read_text())
   report.update(total_process_seconds=monitor['elapsed_seconds'],native_log=str(run_root/'blender-native.log'),telemetry=str(run_root/'gpu-telemetry.jsonl'))
@@ -134,8 +144,8 @@ def main(root,benchmark=False,renderer='cycles'):
  return output
 
 if __name__=='__main__':
- parser=argparse.ArgumentParser();parser.add_argument('--root',default='/content/video_engine');parser.add_argument('--benchmark',action='store_true');parser.add_argument('--renderer',choices=['cycles','eevee'],default='cycles');args=parser.parse_args()
- try:main(args.root,args.benchmark,args.renderer)
+ parser=argparse.ArgumentParser();parser.add_argument('--root',default='/content/video_engine');parser.add_argument('--benchmark',action='store_true');parser.add_argument('--renderer',choices=['cycles','eevee'],default='cycles');parser.add_argument('--parallel-auto',action='store_true');args=parser.parse_args()
+ try:main(args.root,args.benchmark,args.renderer,args.parallel_auto)
  except BaseException as e:
   root=Path(args.root);root.mkdir(parents=True,exist_ok=True)
   (root/'GPU_ERROR.txt').write_text('GPU RENDER FAILED\n\n'+str(e)+'\n\n'+traceback.format_exc(),encoding='utf-8')

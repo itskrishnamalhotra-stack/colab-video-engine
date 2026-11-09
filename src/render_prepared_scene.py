@@ -1,5 +1,5 @@
 """Blender GPU tail: packed scene, OptiX preferred, persistent data and GPU OIDN."""
-import argparse,hashlib,json,struct,sys,time
+import argparse,hashlib,json,os,struct,sys,time
 from pathlib import Path
 import bpy
 
@@ -8,6 +8,8 @@ parser.add_argument('--benchmark',action='store_true',help='Only two full-qualit
 parser.add_argument('--inspect-only',action='store_true',help='Check settings/API without rendering, including on a CPU-only workstation.')
 parser.add_argument('--cycles-print-stats',action='store_true')
 parser.add_argument('--renderer',choices=['cycles','eevee'],default='cycles')
+parser.add_argument('--frame-start',type=int);parser.add_argument('--frame-end',type=int)
+parser.add_argument('--worker-id',default='')
 args=parser.parse_args(sys.argv[sys.argv.index('--')+1:])
 project=Path(args.project);frames=Path(args.frames);frames.mkdir(parents=True,exist_ok=True)
 bpy.ops.wm.open_mainfile(filepath=str(project/'prepared-scene.blend'),load_ui=False,use_scripts=True)
@@ -66,6 +68,10 @@ device_info={'engine':scene.render.engine,'requested_device':backend,'device':',
  'threads_mode':scene.render.threads_mode,'frame_range':[scene.frame_start,scene.frame_end],'benchmark':args.benchmark}
 if args.renderer=='eevee':device_info.update(graphics=graphics,raytracing='SCREEN',raytrace_resolution_scale='1',raytrace_quality=.5,fast_gi_quality=.5,shadow_rays=2,shadow_steps=6)
 print('BUILD_STAGE renderer settings '+json.dumps(device_info),flush=True)
+requested_first=args.frame_start if args.frame_start is not None else scene.frame_start
+requested_last=args.frame_end if args.frame_end is not None else scene.frame_end
+if not scene.frame_start<=requested_first<=requested_last<=scene.frame_end:raise ValueError('Assigned frames are outside the prepared animation.')
+print('BUILD_STAGE assigned frame window '+json.dumps({'first':requested_first,'last':requested_last,'worker':args.worker_id or 'single'}),flush=True)
 if args.inspect_only:
  print('SETTINGS_INSPECTION_OK',flush=True)
  raise SystemExit(0)
@@ -91,12 +97,19 @@ else:
  if marker.is_file():
   if json.loads(marker.read_text())!=cache_config:raise RuntimeError('Cached frame settings differ. Use a fresh frames folder for this render configuration.')
  elif any(frames.glob('frame_*.png')):raise RuntimeError('Cached frames have no settings record. Use a fresh frames folder.')
- marker.write_text(json.dumps(cache_config,indent=2))
+ temporary=marker.with_suffix(f'.{os.getpid()}.tmp');temporary.write_text(json.dumps(cache_config,indent=2));temporary.replace(marker)
 for path in frames.glob('frame_*.png'):
  if not valid_png(path):path.unlink() # Only incomplete renderer-owned PNGs in this exact frames folder.
 cached=sum(valid_png(frames/f'frame_{f:04d}.png') for f in range(first,last+1))
 progress_path=project/'data/render-progress.json'
+if args.worker_id:
+ if not args.worker_id.replace('-','').isalnum():raise ValueError('Invalid worker ID.')
+ progress_path=project/('data/render-progress-'+args.worker_id+'.json')
 if args.benchmark:progress_path=project/'data/benchmark-progress.json'
+assigned_first=args.frame_start if args.frame_start is not None else first
+assigned_last=args.frame_end if args.frame_end is not None else last
+if not first<=assigned_first<=assigned_last<=last:raise ValueError('Assigned frames are outside the prepared animation.')
+scene.frame_start=assigned_first;scene.frame_end=assigned_last
 timings=[];frame_started=None;written_at=None;wall_checkpoint=time.monotonic()
 def start_frame(scene,*_):
  global frame_started
@@ -121,7 +134,7 @@ bpy.app.handlers.render_pre.append(start_frame)
 bpy.app.handlers.render_post.append(rendered_frame)
 bpy.app.handlers.render_write.append(save_progress)
 print(f'BUILD_STAGE resuming with {cached}/{last-first+1} valid cached frames',flush=True)
-if cached<last-first+1:bpy.ops.render.render(animation=True)
+if not all(valid_png(frames/f'frame_{f:04d}.png') for f in range(assigned_first,assigned_last+1)):bpy.ops.render.render(animation=True)
 if args.benchmark:
  report={'status':'benchmark_complete','settings':device_info,'frames':timings,
   'baseline_observed_seconds_per_frame':56.9,
