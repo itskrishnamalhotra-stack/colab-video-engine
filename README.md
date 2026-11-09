@@ -1,3 +1,13 @@
+# Reusable GPU video engine
+
+[Open reusable GPU runtime in Colab](https://colab.research.google.com/github/itskrishnamalhotra-stack/colab-video-engine/blob/main/GPU_Runtime.ipynb)
+
+This notebook exposes a token-protected general runtime for Python, shell/terminal,
+file transfer, GPU scene tests and different video projects. It is not tied to one
+scene. [Setup, tools and workflow](RUNTIME.md).
+
+The single-scene launchers below are retained as legacy examples.
+
 # GPU video renderer — Kaggle and Colab
 
 [Open in Kaggle](https://www.kaggle.com/kernels/welcome?src=https://github.com/itskrishnamalhotra-stack/colab-video-engine/blob/main/Render_Kaggle.ipynb) · [Kaggle notebook source](https://github.com/itskrishnamalhotra-stack/colab-video-engine/blob/main/Render_Kaggle.ipynb)
