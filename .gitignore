@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.env
+*.token
+config.json
+outputs/
+renders/

@@ -1,0 +1,24 @@
+{
+  "title": "The Last Cookie \u2014 Animation Test",
+  "voice": "af_heart",
+  "speed": 1.0,
+  "lead": 0.3,
+  "outro": 1.1,
+  "gap": 0.15,
+  "music": "bounce",
+  "sources": [
+    "Original fictional animation test; no historical claims.",
+    "Character: Snow Rig \u00a9 Blender Foundation | studio.blender.org, CC BY 4.0"
+  ],
+  "lines": [
+    {
+      "text": "She spotted the last cookie on the counter."
+    },
+    {
+      "text": "One quick grab, and nobody would ever know."
+    },
+    {
+      "text": "Then she noticed the camera."
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "project": "artist-rig-test",
+  "snow_archive_sha256": "fbc5a6fe43a4c38a10eceeb6e1b283d79e2589e5429e2d94e35dfed26635b712",
+  "character_credit": "Snow Rig \u00a9 Blender Foundation | studio.blender.org",
+  "files": [
+    {
+      "path": "projects/artist-rig-test/build_scene.py",
+      "sha256": "bb9129ee5dc5e465c401bff8286a1c61048e53f812f9ff7164a5f92be88b8a1c"
+    },
+    {
+      "path": "projects/artist-rig-test/script.json",
+      "sha256": "31208ee3779690c994d47182b92a12d5d8325836ea07c1b360ead80963ed58b1"
+    },
+    {
+      "path": "projects/artist-rig-test/publishing.txt",
+      "sha256": "7087418e38edd3ff49538200966fef95c61205e1eb81d26fb158d30be8a7d4bd"
+    },
+    {
+      "path": "projects/artist-rig-test/data/captions.ass",
+      "sha256": "99e90ba3e6e4fdfd41f9747c6e0d899709f22b4f7d199b509fa7b18d2566b61b"
+    },
+    {
+      "path": "projects/artist-rig-test/data/cues.json",
+      "sha256": "0ae7fa4a25e37e4f89b5657db1a40d1d262ec23bf8af5dafd21fba04f970fb15"
+    },
+    {
+      "path": "projects/artist-rig-test/data/lines.json",
+      "sha256": "ff962a8fb0031bfbbd31811e9d4e55ec41992161641fdc5cc3bca440231df6b9"
+    },
+    {
+      "path": "projects/artist-rig-test/data/mix.wav",
+      "sha256": "1b2315aed98631962ecf68389f9a9e2dbdd201befa182a47bf4030b4a741d609"
+    },
+    {
+      "path": "projects/artist-rig-test/data/narration.wav",
+      "sha256": "bf7bd641bfe972727f0930f90d7c54a5a99e85b4df6594f0f0e30400956606e5"
+    },
+    {
+      "path": "projects/artist-rig-test/data/words.json",
+      "sha256": "c386a2855fdfcf91bdbb63006daeeef073516746230399fa08d98c43604d7490"
+    },
+    {
+      "path": "projects/artist-rig-test/fonts/Caladea-Bold.ttf",
+      "sha256": "ae3cb2dcbc925809dd29d2a44e9802211cab66be541bacbfc9c08c74b27c3742"
+    },
+    {
+      "path": "projects/artist-rig-test/fonts/Inter-Black.otf",
+      "sha256": "1dc81aa64047bfb4246ece435105ec85944f575744d6d850ab7a287fe6b640e7"
+    },
+    {
+      "path": "projects/artist-rig-test/fonts/Inter-ExtraBold.otf",
+      "sha256": "2012ceaf1470372c415f95c00495a1ad1ebdcd1cd6a6225808f011d459a9b12a"
+    },
+    {
+      "path": "run_colab_render.py",
+      "sha256": "21f9eab810c16e1a24ee826a0744646315d9e8435e0713b1e17ecfdf285595b4"
+    }
+  ]
+}
