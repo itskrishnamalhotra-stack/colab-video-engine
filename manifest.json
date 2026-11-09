@@ -88,7 +88,7 @@
     },
     {
       "path": "run_colab_render.py",
-      "sha256": "4a00db0ecc98e85c6a8ec2a753d969ba68f1a8069261b3567d6f62da5c75e10e"
+      "sha256": "7826e2f20b0d095975ab7ad5687af3e09c8c3bb60ab88156121e1c0b1f20bc89"
     },
     {
       "path": "render_prepared.py",
@@ -96,7 +96,11 @@
     },
     {
       "path": "gpu_process_monitor.py",
-      "sha256": "8046feccced7b0a4b4441d409ccf53d8a52a838367244ffe3dee1225591c4709"
+      "sha256": "524ffb3f00e849e92cca0961031b16a50169314ad6f8bc25c8db9c774fcdefae"
+    },
+    {
+      "path": "nvidia_graphics.py",
+      "sha256": "9f6338621b452edc4ff32f3363cabc40e9cb7b5178c4aed3fc08844c26114fd9"
     }
   ]
 }

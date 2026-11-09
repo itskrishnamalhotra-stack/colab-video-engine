@@ -80,6 +80,11 @@ def main(root,benchmark=False,renderer='cycles'):
  if not all(ctypes.util.find_library(n) for n in ['Xrender','Xi','xkbcommon','SM','GL','EGL']) or not all(shutil.which(n) for n in ['ffmpeg','ffprobe']):
   run(['apt-get','-qq','update'],stdout=subprocess.DEVNULL)
   run(['apt-get','-qq','install','-y','libxrender1','libxi6','libxkbcommon0','libsm6','libgl1','libegl1','ffmpeg'],stdout=subprocess.DEVNULL)
+ render_env=None
+ if renderer=='eevee':
+  stage('checking_nvidia_graphics')
+  from nvidia_graphics import prepare_nvidia_graphics
+  render_env=prepare_nvidia_graphics(exe,root)
  prepared=manifest.get('prepared_scene')
  if not prepared:raise RuntimeError('Outdated bundle: the packed animation scene is missing. Open the latest notebook.')
  stage('downloading_prepared_scene')
@@ -100,7 +105,7 @@ def main(root,benchmark=False,renderer='cycles'):
  command+=['--debug-cycles'] if benchmark else []
  command+=['--python',str(root/'render_prepared.py'),'--','--project',str(project),'--frames',str(frames),'--renderer',renderer]
  if benchmark:command+=['--benchmark','--cycles-print-stats']
- monitor=monitored_run(command,run_root)
+ monitor=monitored_run(command,run_root,env=render_env)
  if benchmark:
   report=json.loads((project/'data/gpu-benchmark.json').read_text())
   report.update(total_process_seconds=monitor['elapsed_seconds'],native_log=str(run_root/'blender-native.log'),telemetry=str(run_root/'gpu-telemetry.jsonl'))

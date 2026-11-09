@@ -79,6 +79,11 @@ remove frames. T4 speed/finished visual quality remain unverified.
 Requires a real NVIDIA OpenGL/EGL context; software rendering is refused and
 NVIDIA drivers are not installed/replaced. First-frame shader initialization
 can add time. Stop the previous render cell and keep the same runtime connected.
+The launcher checks existing NVIDIA EGL libraries, selects the vendor through a
+job-local GLVND JSON file, then verifies Blender's graphics context without
+rendering a frame. Only a successful NVIDIA preflight proceeds to the full video.
+Missing libraries or an unavailable context stop with graphics-status.json and
+graphics-preflight.log included in the error report. No driver packages are added.
 Run this full-video option in that runtime by fetching its code as in the
 benchmark example below, substituting `Render_Fast.ipynb`. The resulting video
 is named `artist-rig-test-eevee.mp4`; its frame cache is separate from Cycles.

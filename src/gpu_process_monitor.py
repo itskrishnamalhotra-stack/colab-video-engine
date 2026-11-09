@@ -20,14 +20,14 @@ def memory_state():
    result[name]=dict(line.split() for line in text.splitlines()) if name=='memory.events' else text
  return result
 
-def monitored_run(command,root,heartbeat_seconds=15):
+def monitored_run(command,root,heartbeat_seconds=15,env=None):
  root=Path(root);root.mkdir(parents=True,exist_ok=True)
  state_path=root/'process-status.json';log=root/'blender-native.log'
  before=memory_state();started=time.time()
  def write(state):
   temp=state_path.with_suffix('.tmp');temp.write_text(json.dumps(state,indent=2));temp.replace(state_path)
  with log.open('w',encoding='utf-8',buffering=1) as output:
-  proc=subprocess.Popen(command,stdout=output,stderr=subprocess.STDOUT)
+  proc=subprocess.Popen(command,stdout=output,stderr=subprocess.STDOUT,env=env)
   state={'state':'running','pid':proc.pid,'started':started,'memory_before':before,'native_log':str(log)}
   write(state)
   offset=0
