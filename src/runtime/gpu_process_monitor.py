@@ -1,6 +1,7 @@
 """Flush native logs and record child exit/memory counters while Python owns the wait."""
 import collections,json,os,subprocess,time
 from pathlib import Path
+from runtime_memory import host_memory,process_memory
 
 def gpu_state():
  try:
@@ -28,7 +29,7 @@ def monitored_run(command,root,heartbeat_seconds=15,env=None,cancel_event=None,l
   temp=state_path.with_suffix('.tmp');temp.write_text(json.dumps(state,indent=2));temp.replace(state_path)
  with log.open('w',encoding='utf-8',buffering=1) as output:
   proc=subprocess.Popen(command,stdout=output,stderr=subprocess.STDOUT,env=env)
-  state={'state':'running','pid':proc.pid,'started':started,'memory_before':before,'native_log':str(log)}
+  state={'state':'running','pid':proc.pid,'started':started,'memory_before':before,'native_log':str(log),'host_memory':host_memory()}
   write(state)
   if on_event:on_event({'event':'state','state':state.copy()})
   offset=0;pending=b'';next_health=0
@@ -56,11 +57,11 @@ def monitored_run(command,root,heartbeat_seconds=15,env=None,cancel_event=None,l
     if on_event:on_event({'event':'state','state':state.copy()})
     break
    if time.monotonic()>=next_health:
-    state.update(gpu=gpu_state(),memory=memory_state());write(state)
+    state.update(gpu=gpu_state(),memory=memory_state(),host_memory=host_memory(),process_memory=process_memory(proc.pid));write(state)
     if on_event:on_event({'event':'state','state':state.copy()})
     with (root/'gpu-telemetry.jsonl').open('a',encoding='utf-8') as telemetry:
      telemetry.write(json.dumps({'time':state['updated'],'elapsed_seconds':state['elapsed_seconds'],'gpu':state['gpu']})+'\n')
-    print('JOB_HEARTBEAT',json.dumps({'child_pid':proc.pid,'alive':True,'elapsed_seconds':state['elapsed_seconds'],'memory':state['memory'],'gpu':state['gpu']}),flush=True)
+    print('JOB_HEARTBEAT',json.dumps({'child_pid':proc.pid,'alive':True,'elapsed_seconds':state['elapsed_seconds'],'memory':state['memory'],'host_memory':state['host_memory'],'process_memory':state['process_memory'],'gpu':state['gpu']}),flush=True)
     next_health=time.monotonic()+heartbeat_seconds
    try:proc.wait(timeout=min(1,heartbeat_seconds))
    except subprocess.TimeoutExpired:pass

@@ -1,5 +1,14 @@
 # Reusable GPU runtime
 
+Host RAM correction: four scene copies exceeded the 12.7 GB VM's system RAM in
+the first live attempt, with no completed frames and one killed worker. Worker
+admission now uses available host RAM: 2 GiB reserve and an estimated 3.5 GiB per
+Blender scene. This VM normally admits two; larger RAM can admit four. A request
+for four is an upper bound, not an instruction to exceed available RAM. Rendering
+settings and animation are retained. Progress/logs now include host RAM and
+per-worker RSS; sustained critical headroom ends the job cleanly with cached
+completed frames retained. Failure progress is updated after all peers stop.
+
 Open GPU_Runtime.ipynb in Google Colab, select an NVIDIA GPU and run its cell.
 It prints a temporary HTTPS URL and a private token. The service supports arbitrary
 Python, shell command jobs, an interactive Linux PTY, upload/download, output logs,

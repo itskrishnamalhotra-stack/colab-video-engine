@@ -2,6 +2,7 @@
 import collections,json,os,threading,time
 from pathlib import Path
 from frame_cache import valid_png
+from runtime_memory import host_memory
 
 class RenderProgress:
  def __init__(self,root,frames,first,last,clock=time.monotonic):
@@ -20,11 +21,12 @@ class RenderProgress:
    if event['event']=='state':
     state=event['state'];worker.update(pid=state.get('pid'),status=state['state'])
     if state.get('gpu'):self.gpu=state['gpu']
+    if state.get('process_memory'):worker['memory']=state['process_memory']
     if state['state'] in ('complete','failed'):worker['phase']='Finished' if state['state']=='complete' else 'Failed'
    else:
     line=event['line']
     if line.startswith('FRAME_STARTED '):
-     try:worker.update(frame=int(line.split()[1]),phase='Rendering frame')
+     try:worker.update(frame=int(line.split()[1]),phase='Preparing / rendering frame')
      except (ValueError,IndexError):pass
     elif line.startswith('BUILD_STAGE packed animation'):worker['phase']='Loading scene'
     elif line.startswith('FRAME_PROGRESS '):
@@ -45,11 +47,11 @@ class RenderProgress:
    for worker in self.workers.values():
     item=worker.copy();item['completed']=sum(worker['first']<=f<=worker['last'] for f in self.completed)
     item['total']=worker['last']-worker['first']+1;workers.append(item)
-   return {**{k:self.context[k] for k in ('project','request_id','task') if k in self.context},
+   return {**{k:self.context[k] for k in ('project','request_id','task','requested_worker_limit','admitted_workers','worker_budget_reason') if k in self.context},
     'stage':stage,'completed_frames':count,'total_frames':total,'percent':round(100*count/total,1),
     'cached_frames':self.cached,'active_workers':sum(w['status']=='running' for w in workers),'requested_workers':len(workers),
     'workers':workers,'elapsed_seconds':round(now-self.started,1),'frames_per_second':round(fps,3) if fps else None,
-    'eta_seconds':round(eta) if eta is not None else None,'gpu':self.gpu,'updated':time.time()}
+    'eta_seconds':round(eta) if eta is not None else None,'host_memory':host_memory(),'gpu':self.gpu,'updated':time.time()}
  def publish(self,stage='rendering'):
   result=self.snapshot(stage);target=self.root/'progress.json';temporary=target.with_suffix('.tmp')
   temporary.write_text(json.dumps(result,indent=2));temporary.replace(target)

@@ -3,7 +3,8 @@ import concurrent.futures,json,os,statistics,threading,time
 from pathlib import Path
 from gpu_process_monitor import monitored_run
 from frame_cache import valid_png
-from runtime_progress import RenderProgress
+from runtime_progress import RenderProgress,emit_progress
+from runtime_memory import worker_budget,host_memory,GIB
 
 def measured_baseline(root):
  path=Path(root)/'renderer.log'
@@ -44,15 +45,22 @@ def render_auto_parallel(command,root,frames,first,last,env=None,baseline_second
   started=time.monotonic()
   with concurrent.futures.ThreadPoolExecutor(max_workers=len(assignments)) as executor:
    jobs=[executor.submit(worker,i,bounds) for i,bounds in enumerate(assignments)]
-   pending=set(jobs);tracker.publish()
+   pending=set(jobs);tracker.publish();low_memory_since=None
    try:
     while pending:
      done,pending=concurrent.futures.wait(pending,timeout=progress_interval,return_when=concurrent.futures.FIRST_COMPLETED)
      for job in done:job.result()
+     memory=host_memory()
+     if memory and memory['available_bytes']<.75*GIB and pending:
+      if low_memory_since is None:low_memory_since=time.monotonic()
+      elif time.monotonic()-low_memory_since>=6:raise RuntimeError(f"Host RAM exhausted: only {memory['available_gib']} GiB available. Stopping Blender workers to protect the runtime. Completed frames are retained; retry with fewer workers.")
+     else:low_memory_since=None
      tracker.publish()
     tracker.publish('frames_complete')
    except BaseException:
-    cancelled.set();tracker.publish('failed');raise
+    cancelled.set()
+    concurrent.futures.wait(jobs)
+    tracker.publish('failed');raise
   return time.monotonic()-started
  def timed_values(directory):
   values=[]
@@ -67,7 +75,10 @@ def render_auto_parallel(command,root,frames,first,last,env=None,baseline_second
   todo=missing()
   if fixed_workers is not None:
    chosen=min(fixed_workers,len(todo)) if todo else 0
-   report.update(mode='fixed_persistent_workers',selected_workers=chosen,reason='Each Blender process loads once and renders its entire assigned range; no trial or worker relaunch.')
+   if chosen:chosen,reason=worker_budget(chosen)
+   else:reason='All frames are already cached.'
+   report.update(mode='fixed_persistent_workers',requested_workers=fixed_workers,selected_workers=chosen,host_memory=host_memory(),reason=reason)
+   emit_progress(root,'preparing_workers',requested_worker_limit=fixed_workers,admitted_workers=chosen,worker_budget_reason=reason)
    save();print('BUILD_STAGE parallel selection '+json.dumps(report),flush=True)
    if todo:pool(ranges(todo,chosen),'persistent')
    else:RenderProgress(root,frames,first,last).publish('frames_complete')

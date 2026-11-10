@@ -9,7 +9,9 @@ scene. [Setup, tools and workflow](RUNTIME.md).
 Current runtime: live combined progress dashboard and four persistent EEVEE
 workers by default, selectable per new job with `--workers 1/2/3/4`. Progress
 includes total completed frames, active workers, stage, measured speed and ETA.
-Four-worker speed on a T4 still needs a live run.
+The first four-worker run exceeded the 12.7 GB VM's host RAM. New jobs limit
+workers using available system RAM (normally two on that VM); larger-memory
+runtimes can admit four. GPU VRAM is a separate limit.
 
 The single-scene launchers below are retained as legacy examples.
 

@@ -22,5 +22,11 @@ def render_dashboard(jobs):
   timing=f'Elapsed {duration(p.get("elapsed_seconds"))} · {p.get("frames_per_second") or "estimating"} frames/s · Remaining render time {duration(p.get("eta_seconds"))}'
   if stage in ('encoding_mp4','complete','succeeded'):timing='Frames finished. '+('Encoding and checking the MP4.' if stage=='encoding_mp4' else 'Job finished; output is available through the bridge.')
   stale=f' · Last render update {int(age)}s ago' if age is not None and age>15 and status=='running' else ''
+  memory=p.get('host_memory') or {}
+  memory_text=f"System RAM: {memory.get('used_gib')} / {memory.get('total_gib')} GiB used; {memory.get('available_gib')} GiB available." if memory else 'System RAM telemetry pending.'
+  error=p.get('error')
+  if error:timing='Failure: '+str(error)
+  timing+=' '+memory_text
+  if p.get('worker_budget_reason'):timing+=' '+p['worker_budget_reason']
   cards.append(f'<div style="padding:14px;border:1px solid #888;border-radius:8px;margin:10px 0"><b>{escape(p.get("project",job["job_id"][:12]))} — {escape(stage)}</b><p>{escape(detail)}</p><progress value="{percent}" max="100" style="width:100%"></progress><p>{escape(timing+stale)}</p><table><tr><th>Worker</th><th>Status</th><th>Phase</th><th>Frame</th><th>Done</th><th>PID</th></tr>{rows}</table></div>')
  return '<div><h3>Live runtime jobs</h3><small>Refreshes every 3 seconds. ETA is measured after frames finish; it excludes final encoding/download.</small>'+(''.join(cards) or '<p>Ready — waiting for a job.</p>')+'</div>'
