@@ -1,5 +1,9 @@
 # Reusable GPU video engine
 
+Three.js/WebGL is also supported through the same bridge. Source-based WebGL
+projects render in one persistent Chrome process using NVIDIA EGL, with frame
+progress and verified MP4 download. Native Blender support remains available.
+
 [Open reusable GPU runtime in Colab](https://colab.research.google.com/github/itskrishnamalhotra-stack/colab-video-engine/blob/main/GPU_Runtime.ipynb)
 
 This notebook exposes a token-protected general runtime for Python, shell/terminal,

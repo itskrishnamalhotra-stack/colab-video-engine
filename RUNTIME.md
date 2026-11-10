@@ -1,5 +1,22 @@
 # Reusable GPU runtime
 
+## Three.js/WebGL backend
+
+Projects may select `{"backend":"webgl","execution":"colab"}` in
+render_backend.json. The local engine sends HTML, Three.js code, glTF assets,
+fonts and the mixed soundtrack. The runtime caches official Node/Chrome on
+demand, then captures with one persistent browser and streams frames to FFmpeg.
+NVIDIA WebGL has been verified on a Colab T4 using ANGLE gl-egl; Vulkan failed
+there because the driver did not expose VK_KHR_xcb_surface. Software fallback is
+refused. Current project code must provide OP.gpuInfo/OP.frame and the standard
+timing interface. Blender is a separate optional backend.
+
+`python engine/video_engine.py render projects/PROJECT` retains the normal
+detached sound/mix/render/check/download/open workflow. The same
+`gpu_runtime.py project PROJECT --task build` performs a functional cloud check;
+`--task render` renders a prepared soundtrack directly. Four-worker EEVEE
+settings below do not apply to this one-browser WebGL path.
+
 Host RAM correction: four scene copies exceeded the 12.7 GB VM's system RAM in
 the first live attempt, with no completed frames and one killed worker. Worker
 admission now uses available host RAM: 2 GiB reserve and an estimated 3.5 GiB per
