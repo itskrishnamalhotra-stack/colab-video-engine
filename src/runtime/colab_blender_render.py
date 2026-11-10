@@ -4,6 +4,7 @@ eligible paid Colab runtime with positive compute units under Colab's rules.
 """
 import argparse,ctypes.util,hashlib,json,os,shutil,subprocess,sys,tarfile,time,traceback,urllib.request,zipfile
 from pathlib import Path
+from runtime_progress import emit_progress
 
 def sha(path):
  with Path(path).open('rb') as f:return hashlib.file_digest(f,'sha256').hexdigest()
@@ -60,6 +61,7 @@ def main(root,benchmark=False,renderer='cycles',parallel_auto=False,parallel_wor
  def stage(name,**kw):
   status.write_text(json.dumps({'stage':name,'updated':time.time(),**kw},indent=2),encoding='utf-8')
   print('GPU_STAGE',name,flush=True)
+  emit_progress(root,name,project=manifest['project'])
  manifest=json.loads((root/'manifest.json').read_text())
  for item in manifest['files']:
   if sha(root/item['path'])!=item['sha256']:raise ValueError('Bundle verification failed: '+item['path'])
@@ -144,7 +146,7 @@ def main(root,benchmark=False,renderer='cycles',parallel_auto=False,parallel_wor
  return output
 
 if __name__=='__main__':
- parser=argparse.ArgumentParser();parser.add_argument('--root',default='/content/video_engine');parser.add_argument('--benchmark',action='store_true');parser.add_argument('--renderer',choices=['cycles','eevee'],default='cycles');parser.add_argument('--parallel-auto',action='store_true');parser.add_argument('--parallel-workers',type=int,choices=[1,2]);args=parser.parse_args()
+ parser=argparse.ArgumentParser();parser.add_argument('--root',default='/content/video_engine');parser.add_argument('--benchmark',action='store_true');parser.add_argument('--renderer',choices=['cycles','eevee'],default='cycles');parser.add_argument('--parallel-auto',action='store_true');parser.add_argument('--parallel-workers',type=int,choices=range(1,5));args=parser.parse_args()
  try:main(args.root,args.benchmark,args.renderer,args.parallel_auto,args.parallel_workers)
  except BaseException as e:
   root=Path(args.root);root.mkdir(parents=True,exist_ok=True)

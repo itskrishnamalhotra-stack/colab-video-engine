@@ -6,6 +6,11 @@ This notebook exposes a token-protected general runtime for Python, shell/termin
 file transfer, GPU scene tests and different video projects. It is not tied to one
 scene. [Setup, tools and workflow](RUNTIME.md).
 
+Current runtime: live combined progress dashboard and four persistent EEVEE
+workers by default, selectable per new job with `--workers 1/2/3/4`. Progress
+includes total completed frames, active workers, stage, measured speed and ETA.
+Four-worker speed on a T4 still needs a live run.
+
 The single-scene launchers below are retained as legacy examples.
 
 # GPU video renderer — Kaggle and Colab

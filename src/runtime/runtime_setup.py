@@ -34,6 +34,7 @@ def setup(root):
   prepare_snow(root,json.loads(recipe.read_text()))
   capabilities['snow_asset']='cached'
  (root/'projects').mkdir(exist_ok=True);(root/'results').mkdir(exist_ok=True)
+ capabilities.update(max_render_workers=4,default_render_workers=4,progress_protocol=1)
  (root/'runtime-capabilities.json').write_text(json.dumps(capabilities,indent=2))
  print('RUNTIME_READY',json.dumps(capabilities),flush=True)
  return capabilities

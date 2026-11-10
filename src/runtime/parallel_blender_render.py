@@ -1,8 +1,9 @@
-"""Bounded two-worker throughput trial, then render remaining frames automatically."""
+"""Persistent one-to-four worker rendering, with an optional legacy throughput trial."""
 import concurrent.futures,json,os,statistics,threading,time
 from pathlib import Path
 from gpu_process_monitor import monitored_run
 from frame_cache import valid_png
+from runtime_progress import RenderProgress
 
 def measured_baseline(root):
  path=Path(root)/'renderer.log'
@@ -16,30 +17,42 @@ def measured_baseline(root):
   except (ValueError,KeyError,TypeError):pass
  return statistics.median(timings[-9:]) if len(timings)>=2 else None
 
-def render_auto_parallel(command,root,frames,first,last,env=None,baseline_seconds=None,heartbeat_seconds=15,fixed_workers=None):
- if fixed_workers not in (None,1,2):raise ValueError('At most two fixed workers are supported.')
+def render_auto_parallel(command,root,frames,first,last,env=None,baseline_seconds=None,heartbeat_seconds=15,fixed_workers=None,progress_interval=3):
+ if fixed_workers is not None and fixed_workers not in range(1,5):raise ValueError('Choose between one and four persistent workers.')
  root=Path(root);frames=Path(frames)
  work=root/('parallel-'+str(time.time_ns()));work.mkdir(parents=True)
  status=root/'process-status.json';report_path=root/'parallel-status.json'
- report={'state':'running','max_workers':2,'same_render_settings':True,'work_directory':str(work)}
+ report={'state':'running','max_workers':4,'same_render_settings':True,'work_directory':str(work)}
  def save():
   temporary=report_path.with_suffix('.tmp');temporary.write_text(json.dumps(report,indent=2));temporary.replace(report_path)
  def missing():return [f for f in range(first,last+1) if not valid_png(frames/f'frame_{f:04d}.png')]
  def ranges(items,count):
-  split=(len(items)+count-1)//count
-  return [(part[0],part[-1]) for offset in range(0,len(items),split) if (part:=items[offset:offset+split])]
+  count=min(count,len(items));base,extra=divmod(len(items),count);result=[];offset=0
+  for index in range(count):
+   size=base+(index<extra);part=items[offset:offset+size];result.append((part[0],part[-1]));offset+=size
+  return result
  def pool(assignments,tag):
   cancelled=threading.Event()
+  tracker=RenderProgress(root,frames,first,last)
+  for index,bounds in enumerate(assignments):tracker.register(f'{tag}-{index}',bounds)
   def worker(index,bounds):
    label=f'{tag}-{index}';directory=work/label
    args=command+['--frame-start',str(bounds[0]),'--frame-end',str(bounds[1]),'--worker-id',label]
-   try:return monitored_run(args,directory,heartbeat_seconds,env,cancel_event=cancelled,label=label)
+   try:return monitored_run(args,directory,heartbeat_seconds,env,cancel_event=cancelled,label=label,on_event=lambda event:tracker.event(label,event))
    except BaseException:
     cancelled.set();raise
   started=time.monotonic()
-  with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+  with concurrent.futures.ThreadPoolExecutor(max_workers=len(assignments)) as executor:
    jobs=[executor.submit(worker,i,bounds) for i,bounds in enumerate(assignments)]
-   for job in concurrent.futures.as_completed(jobs):job.result()
+   pending=set(jobs);tracker.publish()
+   try:
+    while pending:
+     done,pending=concurrent.futures.wait(pending,timeout=progress_interval,return_when=concurrent.futures.FIRST_COMPLETED)
+     for job in done:job.result()
+     tracker.publish()
+    tracker.publish('frames_complete')
+   except BaseException:
+    cancelled.set();tracker.publish('failed');raise
   return time.monotonic()-started
  def timed_values(directory):
   values=[]
@@ -57,6 +70,7 @@ def render_auto_parallel(command,root,frames,first,last,env=None,baseline_second
    report.update(mode='fixed_persistent_workers',selected_workers=chosen,reason='Each Blender process loads once and renders its entire assigned range; no trial or worker relaunch.')
    save();print('BUILD_STAGE parallel selection '+json.dumps(report),flush=True)
    if todo:pool(ranges(todo,chosen),'persistent')
+   else:RenderProgress(root,frames,first,last).publish('frames_complete')
    if missing():raise RuntimeError('Missing or incomplete frames remain after the persistent workers finished.')
    report.update(state='complete',completed_frames=last-first+1);save();return report
   if len(todo)<4:

@@ -105,6 +105,22 @@ def gpu_details():
         return {'available': False, 'error': f'{type(exc).__name__}: {exc}'}
 
 
+def job_with_progress(job):
+    result=job.copy()
+    path=JOB_DIR/job['job_id']/'output.log'
+    try:
+        with path.open('rb') as stream:
+            stream.seek(0,2);size=stream.tell();stream.seek(max(0,size-262144))
+            lines=stream.read().split(b'\n')[:-1]
+        for line in reversed(lines):
+            if line.startswith((b'RENDER_PROGRESS ',b'ENGINE_PROGRESS ')):
+                try:progress=json.loads(line.split(b' ',1)[1])
+                except (ValueError,UnicodeError):continue
+                if isinstance(progress,dict):result['progress']=progress;break
+    except OSError:pass
+    return result
+
+
 def status():
     ram = psutil.virtual_memory()
     disk = psutil.disk_usage(str(BRIDGE_DIR))
@@ -125,8 +141,8 @@ def status():
         'bridge_dir': str(BRIDGE_DIR),
         'persistent_state_dir': str(PERSIST_DIR) if PERSIST_DIR else None,
         'active_job_ids': running,
-        'recent_jobs': [{k: j.get(k) for k in ('job_id', 'kind', 'status', 'exit_code', 'started_at', 'finished_at', 'command')}
-                        for j in recent],
+        'recent_jobs': [{k: j.get(k) for k in ('job_id', 'kind', 'status', 'exit_code', 'started_at', 'finished_at', 'command','progress')}
+                        for j in map(job_with_progress,recent)],
         'events': events,
     }
 
@@ -359,7 +375,7 @@ def close_terminal(identifier:str):
 
 @app.get('/health', dependencies=[Depends(secure)])
 def health():
-    return {'status': 'ok', 'timestamp_utc': now(), 'api_version': 2}
+    return {'status': 'ok', 'timestamp_utc': now(), 'api_version': 3}
 
 @app.on_event('shutdown')
 def shutdown_children():
@@ -395,7 +411,7 @@ def python_job(req: PythonRequest):
 @app.get('/jobs', dependencies=[Depends(secure)])
 def list_jobs(limit: int = Query(default=20, ge=1, le=100)):
     with LOCK:
-        return list(JOBS.values())[-limit:]
+        return [job_with_progress(j) for j in list(JOBS.values())[-limit:]]
 
 
 @app.get('/jobs/{job_id}', dependencies=[Depends(secure)])
@@ -403,7 +419,7 @@ def get_job(job_id: str):
     with LOCK:
         if job_id not in JOBS:
             raise HTTPException(status_code=404, detail='Unknown job ID')
-        return JOBS[job_id].copy()
+        return job_with_progress(JOBS[job_id])
 
 
 @app.get('/jobs/{job_id}/output', dependencies=[Depends(secure)])
@@ -411,7 +427,7 @@ def job_output(job_id: str, offset: int = Query(default=0, ge=0), limit: int = Q
     with LOCK:
         if job_id not in JOBS:
             raise HTTPException(status_code=404, detail='Unknown job ID')
-        job = JOBS[job_id].copy()
+        job = job_with_progress(JOBS[job_id])
     p = JOB_DIR / job_id / 'output.log'
     size = p.stat().st_size if p.exists() else 0
     with p.open('rb') as f:

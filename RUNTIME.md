@@ -42,7 +42,7 @@ platform gating, while the Linux PTY still needs live validation.
 ```
 python engine/gpu_runtime.py project projects/PROJECT --task build
 python engine/gpu_runtime.py project projects/PROJECT --task probe --first 96
-python engine/gpu_runtime.py project projects/PROJECT --task render --workers 2
+python engine/gpu_runtime.py project projects/PROJECT --task render --workers 4
 ```
 
 These commands upload project source/audio/assets without reference videos, caches
@@ -52,8 +52,23 @@ and prepared-scene.json. Rig source assets are available from the shared cache.
 The GPU runtime performs preparation and rendering; the laptop does not render.
 Probes select up to 32 consecutive frames at full resolution; completed images are
 retrieved automatically. Full video jobs retain narration, music/effects and captions,
-perform the basic MP4 check, download and open the video. The two Blender workers
+perform the basic MP4 check, download and open the video. The four Blender workers
 load their scenes once and retain their assigned full frame ranges.
+
+Four persistent EEVEE workers are the current default. Choose --workers 1, 2, 3
+or 4 for a new job without changing source or publishing again. Existing running
+jobs keep their worker count. Four workers are locally tested for orchestration;
+their throughput on a T4 is not yet measured. GPU memory may fluctuate and more
+workers do not guarantee a speedup.
+
+The running notebook shows a live dashboard, refreshed every 3 seconds. It counts
+unique completed frames across all workers, includes cached frames, and shows
+each worker's status, current frame, completed range and PID. Overall elapsed
+render time, measured frame rate and estimated remaining render time appear
+after sufficient frames finish. Loading and encoding are separate stages; ETA
+does not include encoding or file transfer. A static high frame number from a
+later worker is never used as the total completed count. The local detached
+watcher's status.json also records progress and downloaded bytes.
 
 The project command returns a job ID immediately and starts a hidden local watcher.
 Logs, status and errors are under engine/jobs/runtime-REQUEST_ID; results go to

@@ -20,7 +20,7 @@ def memory_state():
    result[name]=dict(line.split() for line in text.splitlines()) if name=='memory.events' else text
  return result
 
-def monitored_run(command,root,heartbeat_seconds=15,env=None,cancel_event=None,label=None):
+def monitored_run(command,root,heartbeat_seconds=15,env=None,cancel_event=None,label=None,on_event=None):
  root=Path(root);root.mkdir(parents=True,exist_ok=True)
  state_path=root/'process-status.json';log=root/'blender-native.log'
  before=memory_state();started=time.time()
@@ -30,29 +30,39 @@ def monitored_run(command,root,heartbeat_seconds=15,env=None,cancel_event=None,l
   proc=subprocess.Popen(command,stdout=output,stderr=subprocess.STDOUT,env=env)
   state={'state':'running','pid':proc.pid,'started':started,'memory_before':before,'native_log':str(log)}
   write(state)
-  offset=0
+  if on_event:on_event({'event':'state','state':state.copy()})
+  offset=0;pending=b'';next_health=0
   while True:
    if cancel_event is not None and cancel_event.is_set() and proc.poll() is None:
     proc.terminate()
     try:proc.wait(timeout=5)
     except subprocess.TimeoutExpired:proc.kill();proc.wait()
+   code=proc.poll()
    with log.open('rb') as reader:
     reader.seek(offset)
-    for line in reader:
+    block=pending+reader.read();offset=reader.tell()
+    lines=block.split(b'\n');pending=lines.pop()
+    if code is not None and pending:lines.append(pending);pending=b''
+    for line in lines:
      text=line.decode('utf-8',errors='replace').rstrip()
      if text.startswith(('BUILD_STAGE','FRAME_PROGRESS','FRAME_STARTED','FRAME_TIMING','FRAME_RENDER_SECONDS','GPU_BENCHMARK','BLENDER_FRAMES_COMPLETE')):
+      if on_event:on_event({'event':'line','line':text})
       if label:
        tag,_,detail=text.partition(' ');print(tag+' ['+label+'] '+detail,flush=True)
       else:print(text,flush=True)
-    offset=reader.tell()
-   code=proc.poll();state.update(updated=time.time(),elapsed_seconds=round(time.time()-started,1),memory=memory_state())
+   state.update(updated=time.time(),elapsed_seconds=round(time.time()-started,1))
    if code is not None:
-    state.update(state='complete' if code==0 else 'failed',returncode=code);write(state);break
-   state['gpu']=gpu_state();write(state)
-   with (root/'gpu-telemetry.jsonl').open('a',encoding='utf-8') as telemetry:
-    telemetry.write(json.dumps({'time':state['updated'],'elapsed_seconds':state['elapsed_seconds'],'gpu':state['gpu']})+'\n')
-   print('JOB_HEARTBEAT',json.dumps({'child_pid':proc.pid,'alive':True,'elapsed_seconds':state['elapsed_seconds'],'memory':state['memory'],'gpu':state['gpu']}),flush=True)
-   try:proc.wait(timeout=heartbeat_seconds)
+    state.update(state='complete' if code==0 else 'failed',returncode=code,memory=memory_state());write(state)
+    if on_event:on_event({'event':'state','state':state.copy()})
+    break
+   if time.monotonic()>=next_health:
+    state.update(gpu=gpu_state(),memory=memory_state());write(state)
+    if on_event:on_event({'event':'state','state':state.copy()})
+    with (root/'gpu-telemetry.jsonl').open('a',encoding='utf-8') as telemetry:
+     telemetry.write(json.dumps({'time':state['updated'],'elapsed_seconds':state['elapsed_seconds'],'gpu':state['gpu']})+'\n')
+    print('JOB_HEARTBEAT',json.dumps({'child_pid':proc.pid,'alive':True,'elapsed_seconds':state['elapsed_seconds'],'memory':state['memory'],'gpu':state['gpu']}),flush=True)
+    next_health=time.monotonic()+heartbeat_seconds
+   try:proc.wait(timeout=min(1,heartbeat_seconds))
    except subprocess.TimeoutExpired:pass
  if code:
   with log.open(encoding='utf-8',errors='replace') as f:recent=''.join(collections.deque(f,maxlen=80))
