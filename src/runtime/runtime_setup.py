@@ -35,6 +35,9 @@ def setup(root):
   capabilities['snow_asset']='cached'
  (root/'projects').mkdir(exist_ok=True);(root/'results').mkdir(exist_ok=True)
  capabilities.update(max_render_workers=4,default_render_workers=4,progress_protocol=1)
+ from webgl_partition import MAX_WEBGL_WORKERS
+ capabilities.update(webgl_max_render_workers=MAX_WEBGL_WORKERS,webgl_recommended_native_workers=1,
+                     supported_video_formats=['portrait','landscape'],saved_video_finalization=True)
  (root/'runtime-capabilities.json').write_text(json.dumps(capabilities,indent=2))
  print('RUNTIME_READY',json.dumps(capabilities),flush=True)
  return capabilities

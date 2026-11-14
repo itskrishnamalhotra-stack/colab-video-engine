@@ -1,5 +1,41 @@
 # Reusable GPU runtime
 
+## Current distribution and recovery (2026-11-15)
+
+GPU_Runtime.ipynb and runtime-engine.zip are generated from the canonical local
+runtime modules. Their embedded/source SHA-256 values are verified when building
+and publishing. The bundle includes webgl_partition.py, video_format.py and
+webgl_finalize.py, plus the existing dashboard, memory admission and graphics
+setup fixes. Human/prop art, camera staging, capture guards, dialogue, measured
+sound timing and the mix are supplied by the local authoring engine in each job's
+project package. They are not all stored in this public runtime-only repository.
+
+WebGL accepts 1–8 requested browser workers. The fastest measured native capture
+route on the two-core T4 uses one persistent browser, GPU composition and native
+software H.264 encoding. Worker count alone does not guarantee throughput.
+Blender's separate legacy max_render_workers/default_render_workers fields remain
+four, subject to host-RAM admission; webgl_max_render_workers is reported separately.
+Both 1080×1920 portrait and 1920×1080 landscape projects retain their declared format.
+
+The final merge copies the encoded video and fits the soundtrack's tail to the
+30 fps frame clock. It does not use -shortest, which previously discarded one
+video frame when narration was only 5 ms shorter. Saved segment frame totals,
+the unchanged normalized H.264 packet hash, output duration/format and black-frame
+checks must pass before delivery.
+
+With the local authoring engine installed, recover a failed late finalization:
+
+```
+python engine/video_engine.py recover FAILED_JOB_ID
+```
+
+Recovery requires the same runtime's saved complete worker MP4s, unchanged local
+project inputs and the matching cloud soundtrack. It only remuxes, checks,
+downloads and exports; it does not start Chrome or silently rerender. It cannot
+recover files erased by a deleted runtime. Updating this repository does not
+restart an already running notebook or alter an active job. Open the fresh
+notebook on the next runtime session; do not interrupt an active recovery.
+
 ## Three.js/WebGL backend
 
 Projects may select `{"backend":"webgl","execution":"colab"}` in

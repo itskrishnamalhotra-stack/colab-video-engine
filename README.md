@@ -1,5 +1,16 @@
 # Reusable GPU video engine
 
+Latest runtime update (2026-11-15): the notebook bundle includes WebGL worker
+partitioning (1–8), full-HD portrait/landscape support, and frame-preserving
+audio/video finalization. Completed saved captures can be finalized again without
+rerendering their animation. Exact frame counts, compressed-video hashes and
+black-frame checks remain enabled. See [runtime details](RUNTIME.md).
+
+Repository scope: this is the public notebook/runtime distribution. The local
+authoring engine supplies each project's characters, animation, camera rules,
+measured Foley and soundtrack when submitting a job. This repository is not a
+full backup of that workstation, its projects, reference videos or credentials.
+
 Three.js/WebGL is also supported through the same bridge. Source-based WebGL
 projects render in one persistent Chrome process using NVIDIA EGL, with frame
 progress and verified MP4 download. Native Blender support remains available.
@@ -10,8 +21,10 @@ This notebook exposes a token-protected general runtime for Python, shell/termin
 file transfer, GPU scene tests and different video projects. It is not tied to one
 scene. [Setup, tools and workflow](RUNTIME.md).
 
-Current runtime: live combined progress dashboard and four persistent EEVEE
-workers by default, selectable per new job with `--workers 1/2/3/4`. Progress
+Current runtime: live combined progress dashboard. WebGL permits 1–8 workers;
+native browser H.264 capture defaults to one persistent browser on the measured
+two-core T4. GPU scene composition and software H.264 encoding are distinct;
+this is not hardware NVENC. Blender EEVEE can request up to four workers. Progress
 includes total completed frames, active workers, stage, measured speed and ETA.
 The first four-worker run exceeded the 12.7 GB VM's host RAM. New jobs limit
 workers using available system RAM (normally two on that VM); larger-memory
