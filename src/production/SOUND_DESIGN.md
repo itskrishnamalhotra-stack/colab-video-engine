@@ -1,5 +1,21 @@
 # Frame-bound sound design
 
+Reusable music rule (2026-11-15): Music must be present and audible on phone
+speakers, with a story/genre-specific original or licensed instrumental source.
+Avoid a sub-bass-only bed. Use shared music_mix.py / music_policy.json in both
+short and long-form mixers: baseline -24 dB RMS before mastering, 4 dB speech
+duck, 60ms attack and 650ms release, smooth entrance/exit, and a restrained rise
+between phrases. These are starting levels, not a claim of perfect aesthetics;
+keep narration and meaningful measured Foley clear. Report source midrange and
+actual stem levels. The current horror uses original suspense-phone-v2.wav;
+do not reuse this horror score in unrelated genres. Retain material-matched,
+measured-contact Foley. Sound-only updates copy verified picture packets and
+never rerender animation; audio_execution=colab mixes/finalizes on the connected
+runtime. Preserve the approved source export and enforce unchanged-stream and
+final MP4 gates. Voice research/samples do not change permanent Heart 1.0 until
+the user selects another narrator.
+
+
 Approved sound standard (user approval, 2026-11-10): the user loves the
 measured-contact soundtrack in outputs/pickpocket-webgl-extended-20261110T174404-4b264108.mp4
 and wants this approach reused for all future video formats. This job completed

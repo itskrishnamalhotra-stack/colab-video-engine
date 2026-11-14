@@ -17,6 +17,14 @@ def remux(job,cfg,run_command):
  expected=cache.get('visual_inputs_sha256')
  if not expected or visual_signature(project)!=expected:raise ValueError('Visuals or narration timing changed; an audio-only update cannot preserve the requested new visuals.')
  verify_video(source,project,cfg)
+ backend=json.loads((project/'render_backend.json').read_text())
+ if backend.get('audio_execution')=='colab':
+  from cloud_soundtrack import remux_remote
+  remux_remote(job,cfg,source,cache)
+  original=video_digest(source,cfg);updated=video_digest(Path(job['render_file']),cfg)
+  if original!=updated:raise ValueError('Cloud soundtrack revision changed the encoded video stream')
+  job.update(video_stream_unchanged=True,video_stream_sha256=updated,audio_only=True)
+  return
  prepare_audio(job,cfg,run_command)
  if visual_signature(project)!=expected:raise ValueError('Audio preparation changed the shot timing; use a full render.')
  job['render_inputs_sha256']=signature(project)

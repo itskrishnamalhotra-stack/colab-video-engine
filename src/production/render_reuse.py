@@ -2,6 +2,10 @@
 import hashlib,json,shutil
 from pathlib import Path
 ENGINE=Path(__file__).resolve().parent
+def path_order(path,project):
+ # Preserve the original Windows ordering on every runtime. Native Path sorts
+ # differently on Linux for mixed-case names, despite identical file bytes.
+ return tuple(part.casefold() for part in path.relative_to(project).parts)
 
 def digest(path):
  with Path(path).open('rb') as f:return hashlib.file_digest(f,'sha256').hexdigest()
@@ -21,11 +25,11 @@ def signature(project):
  for name in ('script.json','action_plan.json','action_probe.json','prepare_cues.py','index.html','data/narration.wav','data/lines.json','data/words.json'):
   if (project/name).is_file():paths.append(project/name)
  paths.extend(declared_visual_inputs(project))
- for p in sorted(paths):h.update((p.relative_to(project).as_posix()+'\0'+digest(p)+'\n').encode())
+ for p in sorted(paths,key=lambda p:path_order(p,project)):h.update((p.relative_to(project).as_posix()+'\0'+digest(p)+'\n').encode())
  backend=json.loads((project/'render_backend.json').read_text())
  for key in ('workers','job_timeout_seconds','force_render'):backend.pop(key,None)
  h.update(json.dumps(backend,sort_keys=True).encode())
- for name in ('foley_mix.py','longform_mix.py','action_sound.py','animation_events.py','trace_action_events.mjs','action_event_trace.mjs','video_defaults.json','sound_profile.py','sound_defaults.json','sound_materials.json'):
+ for name in ('foley_mix.py','longform_mix.py','music_mix.py','music_policy.json','action_sound.py','animation_events.py','trace_action_events.mjs','action_event_trace.mjs','video_defaults.json','sound_profile.py','sound_defaults.json','sound_materials.json'):
   if (ENGINE/name).is_file():h.update((name+digest(ENGINE/name)).encode())
  return h.hexdigest()
 
@@ -36,14 +40,14 @@ def visual_signature(project):
  for name in ('index.html','data/lines.json','data/words.json','data/shot_timing.json','tools/cloud_capture.mjs','tools/capture_transport.mjs'):
   if (project/name).is_file():paths.append(project/name)
  paths.extend(declared_visual_inputs(project))
- for p in sorted(paths):h.update((p.relative_to(project).as_posix()+'\0'+digest(p)+'\n').encode())
+ for p in sorted(paths,key=lambda p:path_order(p,project)):h.update((p.relative_to(project).as_posix()+'\0'+digest(p)+'\n').encode())
  script=json.loads((project/'script.json').read_text())
  for key in ('music','sound_profile','sound_design'):script.pop(key,None)
  h.update(json.dumps(script,sort_keys=True).encode())
  plan=project/'action_plan.json'
  if plan.is_file():h.update(json.dumps(json.loads(plan.read_text())['shots'],sort_keys=True).encode())
  backend=json.loads((project/'render_backend.json').read_text())
- for key in ('workers','job_timeout_seconds','force_render','timing_target_seconds','preferred_target_seconds'):backend.pop(key,None)
+ for key in ('workers','job_timeout_seconds','force_render','timing_target_seconds','preferred_target_seconds','audio_execution'):backend.pop(key,None)
  h.update(json.dumps(backend,sort_keys=True).encode());return h.hexdigest()
 
 def restore(job):

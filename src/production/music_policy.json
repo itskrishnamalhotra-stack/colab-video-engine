@@ -1,0 +1,10 @@
+{
+  "profile": "audible-story-music-v2",
+  "bed_rms_db": -24.0,
+  "duck_db": 4.0,
+  "attack_seconds": 0.06,
+  "release_seconds": 0.65,
+  "fade_in_seconds": 0.5,
+  "fade_out_seconds": 1.0,
+  "rule": "Choose original or licensed instrumental music for the story's genre; include audible midrange for phone playback, smooth narration ducking and authored tension/release. Do not copy horror music into unrelated stories. Music supports rather than replaces measured action Foley."
+}

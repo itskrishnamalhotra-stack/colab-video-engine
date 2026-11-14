@@ -9,6 +9,7 @@ import numpy as np
 from scipy import signal
 from scipy.io import wavfile
 from sound_profile import validate_events,PROFILE
+import music_mix
 SR=48000
 
 def db(value):return 10**(value/20)
@@ -73,10 +74,10 @@ def mix(project):
   verify_cues(p,cues)
  def digest(path):
   with Path(path).open('rb') as stream:return hashlib.file_digest(stream,'sha256').hexdigest()
- inputs=[p/'data/cues.json',p/'data/narration.wav',p/script['music'],Path(__file__),PROFILE,Path(__file__).parent/'sound_materials.json']
+ inputs=[p/'data/cues.json',p/'data/narration.wav',p/script['music'],Path(__file__),PROFILE,Path(__file__).parent/'sound_materials.json',Path(music_mix.__file__),music_mix.POLICY]
  if cues['duration']>180:inputs.append(Path(__file__).parent/'longform_mix.py')
  inputs.extend(p/'audio/foley'/name for name in sorted({event['sample'] for event in cues['cues']}))
- key=hashlib.sha256(''.join(digest(path) for path in inputs).encode()).hexdigest()
+ key=hashlib.sha256((''.join(digest(path) for path in inputs)+json.dumps({k:script.get(k) for k in ('sound_design','soundscape')},sort_keys=True)).encode()).hexdigest()
  try:
   previous=json.loads((p/'data/sound-report.json').read_text())
   if previous.get('inputs_sha256')==key and digest(p/'data/mix.wav')==previous.get('mix_sha256'):
@@ -123,15 +124,8 @@ def mix(project):
  air=signal.sosfilt(signal.butter(2,[100,1900],btype='bandpass',fs=SR,output='sos'),air,axis=0).astype(np.float32)
  air*=db(-53)/rms(air);ambience+=air
  music_path=p/script['music']
- score=decode(music_path)
- if len(score)<n:score=np.tile(score,(math.ceil(n/len(score)),1))
- score=score[:n];score*=db(-27.5)/max(rms(score),1e-7)
- # Envelope follows speech, with a short release; music rises between sentences.
- power=np.mean(voice**2,axis=1);envelope=signal.lfilter([1-math.exp(-1/(SR*.12))],[1,-math.exp(-1/(SR*.12))],power)
- duck=1-.48*np.clip(np.sqrt(envelope)/db(-24),0,1)
- music=score*duck[:,None]
- fade_in=min(n,round(.35*SR));fade_out=min(n,round(.8*SR))
- music[:fade_in]*=np.linspace(0,1,fade_in)[:,None];music[-fade_out:]*=np.linspace(1,0,fade_out)[:,None]
+ policy=music_mix.settings(script);score,music_report=music_mix.prepare(decode(music_path),policy)
+ music,_=music_mix.block(score,voice,0,n,policy)
  pre=voice+foley+music+ambience
  temporary=p/'data/mix-premaster.wav';wavfile.write(temporary,SR,pre.astype(np.float32))
  result=subprocess.run([binary('ffmpeg'),'-y','-hide_banner','-nostats','-i',str(temporary),'-af','loudnorm=I=-16:TP=-1.5:LRA=9:print_format=json','-ar',str(SR),'-c:a','pcm_s16le',str(p/'data/mix.wav')],capture_output=True,text=True,check=True)
@@ -139,6 +133,7 @@ def mix(project):
  temporary.unlink()
  loudness=parse_loudness(result.stderr)
  report={'inputs_sha256':key,'mix_sha256':digest(p/'data/mix.wav'),'duration':cues['duration'],'sample_events':len(event_log),'unique_samples':len(cache),'narrator':'af_heart','speed':1.0,'voice_rms_db':round(20*math.log10(rms(voice)),2),'foley_rms_db':round(20*math.log10(rms(foley)),2),'music_rms_db':round(20*math.log10(rms(music)),2),'loudness':loudness,'events':event_log}
+ report['music_policy']={**policy,**music_report}
  (p/'data/sound-report.json').write_text(json.dumps(report,indent=2));print('SOUND_MASTER',json.dumps({k:v for k,v in report.items() if k!='events'}),flush=True)
  return report
 
