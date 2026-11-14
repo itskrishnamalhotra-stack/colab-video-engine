@@ -1,5 +1,22 @@
 # Isolated Kokoro voice-pack experiments
 
+Latest voice-reference correction (2026-11-15): the target is the exact original
+ElevenLabs Liam - Energetic preview, NOT stock Kokoro am_liam. User wants ordinary
+clear/energetic speech as the baseline; story-specific dramatic delivery can be
+considered later. The first LAION refs were unsuitable acted performances (one
+contained whisper/gasps/panic), despite the correct speaker ID and clean recording.
+Do not reuse them as normal narration references or select a sample by duration
+alone. runtime_voice_tune.py now defaults to explicitly screened references or
+the exact official demo, never blindly to long-references.json. The corrected
+Colab T4 sample and reusable packs are saved under
+assets/voices/experimental/liam-clean-demo-20261115. result.json records a 5.494s
+successful generation run after setup. This uses a short 4.127s official demo and
+remains approximate; Inno is one-pass enrollment, not cumulative model training,
+and only reads the first 30 seconds. No new model training or production switch
+is authorized by the existence of a test result; the user still judges the match.
+Heart remains the production default. Preserve prior trial files as historical.
+
+
 Production defaults stay Heart / af_heart at speed 1.0 until the user explicitly
 chooses another narrator. A voice experiment does not alter an existing video,
 publish a voice, or establish an exact speaker match.
