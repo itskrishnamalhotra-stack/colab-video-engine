@@ -20,9 +20,9 @@ def declared_visual_inputs(project):
 
 def signature(project):
  project=Path(project).resolve();h=hashlib.sha256();paths=[]
- for folder in ('src','fonts','assets','vendor','audio','tools'):
+ for folder in ('src','fonts','assets','vendor','audio','tools','voices'):
   paths.extend(p for p in (project/folder).rglob('*') if p.is_file() and '__pycache__' not in p.parts)
- for name in ('script.json','action_plan.json','action_probe.json','prepare_cues.py','index.html','data/narration.wav','data/lines.json','data/words.json'):
+ for name in ('script.json','narrator.json','action_plan.json','action_probe.json','prepare_cues.py','index.html','data/narration.wav','data/lines.json','data/words.json'):
   if (project/name).is_file():paths.append(project/name)
  paths.extend(declared_visual_inputs(project))
  for p in sorted(paths,key=lambda p:path_order(p,project)):h.update((p.relative_to(project).as_posix()+'\0'+digest(p)+'\n').encode())

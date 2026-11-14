@@ -1,5 +1,31 @@
 # Isolated Kokoro voice-pack experiments
 
+Approved clone video variant (2026-11-15): the user likes the corrected-source
+Liam clone and requested a separate version of the recent one-minute video.
+Project: projects/the-room-that-remembers-liam. Original Heart project/export
+remains preserved. The project narrator.json pins the existing selected
+am_liam_clean_1 NPY by SHA-256; it does not re-clone or alter the installed voice
+bank. Global narrator defaults remain Heart 1.0 for other projects.
+
+Custom narration uses the cached Colab Python 3.12 CUDA Kokoro environment.
+Native synthesis token durations provide its new word clock, without guessed
+fallbacks. The same scenes, music and material sound policy are retained; cuts,
+captions, radio dialogue and measured Foley are regenerated against that clock.
+The target remains 60 seconds. This version permits bounded native pace fitting
+(up to 1.15x), recorded in data/narration-report.json; tiny excess can remove
+silent outro padding only, never speech. The first attempt was rejected at
+60.045s; a regression now covers that 45ms padding case. This is a new narration
+version, so it requires a real render with its own captions and action clock,
+not a claim of unchanged encoded pictures. No previous final video is replaced.
+Audio/render job evidence, not this preparation note, establishes completion.
+
+Shared code: narration_profile.py, cloud_narration.py,
+runtime_custom_narration.py and per-project voice checks in video_engine.py.
+Use the standard detached audio/render commands. The audio worker uses the host
+HTTP-capable interpreter and cloud GPU synthesis; radio EQ and sound tracing
+remain standard. Do not bypass the selected voice hash or the final MP4 gates.
+
+
 Latest voice-reference correction (2026-11-15): the target is the exact original
 ElevenLabs Liam - Energetic preview, NOT stock Kokoro am_liam. User wants ordinary
 clear/energetic speech as the baseline; story-specific dramatic delivery can be

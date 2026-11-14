@@ -80,7 +80,7 @@ def mix_longform(p,cues,script,key):
  report={'inputs_sha256':key,'mix_sha256':mix_hash,'duration':cues['duration'],'sample_events':len(events),'unique_samples':len(cache),
          'narrator':'af_heart','speed':1.0,'memory_mode':'disk buses / two-second blocks','loudness':loudness,'events':events,
          **{k+'_rms_db':round(10*math.log10(max(1e-15,total/(n*2))),2) for k,total in sums.items()}}
- report['music_policy']={**policy,**music_report}
+ report.update(narrator=script.get('voice','af_heart'),speed=script.get('speed',1.0));report['music_policy']={**policy,**music_report}
  (folder/'sound-report.json').write_text(json.dumps(report,indent=2));del f
  voice._mmap.close();contacts._mmap.close();del voice,contacts
  for path in temps:path.unlink(missing_ok=True)

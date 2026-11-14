@@ -133,7 +133,7 @@ def mix(project):
  temporary.unlink()
  loudness=parse_loudness(result.stderr)
  report={'inputs_sha256':key,'mix_sha256':digest(p/'data/mix.wav'),'duration':cues['duration'],'sample_events':len(event_log),'unique_samples':len(cache),'narrator':'af_heart','speed':1.0,'voice_rms_db':round(20*math.log10(rms(voice)),2),'foley_rms_db':round(20*math.log10(rms(foley)),2),'music_rms_db':round(20*math.log10(rms(music)),2),'loudness':loudness,'events':event_log}
- report['music_policy']={**policy,**music_report}
+ report.update(narrator=script.get('voice','af_heart'),speed=script.get('speed',1.0));report['music_policy']={**policy,**music_report}
  (p/'data/sound-report.json').write_text(json.dumps(report,indent=2));print('SOUND_MASTER',json.dumps({k:v for k,v in report.items() if k!='events'}),flush=True)
  return report
 
