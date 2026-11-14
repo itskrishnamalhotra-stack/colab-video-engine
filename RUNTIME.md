@@ -1,145 +1,46 @@
-# Reusable GPU runtime
+# Current runtime and source
 
-## Current distribution and recovery (2026-11-15)
+Run GPU_Runtime.ipynb from the current main branch. Reopen it from GitHub to
+receive code changes; reconnecting an old open tab does not refresh its source.
+The launcher caches Node/Chrome/FFmpeg once and exposes a general authenticated
+runtime. It embeds no project, reference footage, narrator model or video.
 
-GPU_Runtime.ipynb and runtime-engine.zip are generated from the canonical local
-runtime modules. Their embedded/source SHA-256 values are verified when building
-and publishing. The bundle includes webgl_partition.py, video_format.py and
-webgl_finalize.py, plus the existing dashboard, memory admission and graphics
-setup fixes. Human/prop art, camera staging, capture guards, dialogue, measured
-sound timing and the mix are supplied by the local authoring engine in each job's
-project package. They are not all stored in this public runtime-only repository.
+src/runtime mirrors the Python runtime modules. runtime-engine.zip and the
+notebook embed the same hash-verified tools. src/studio mirrors the reusable
+illustrated WebGL components; src/production holds selected local orchestration,
+sound and timing source. These source mirrors are not a standalone installation:
+the local engine builds a complete prepared project package with pinned studio
+modules, assets, sound master and browser capture tools for each job.
 
-WebGL accepts 1–8 requested browser workers. The fastest measured native capture
-route on the two-core T4 uses one persistent browser, GPU composition and native
-software H.264 encoding. Worker count alone does not guarantee throughput.
-Blender's separate legacy max_render_workers/default_render_workers fields remain
-four, subject to host-RAM admission; webgl_max_render_workers is reported separately.
-Both 1080×1920 portrait and 1920×1080 landscape projects retain their declared format.
+## Permanent visual family
 
-The final merge copies the encoded video and fits the soundtrack's tail to the
-30 fps frame clock. It does not use -shortest, which previously discarded one
-video frame when narration was only 5 ms shorter. Saved segment frame totals,
-the unchanged normalized H.264 packet hash, output duration/format and black-frame
-checks must pass before delivery.
+Use the existing illustrated round heads, coherent face artwork, coat/bean body,
+connected curved arms and simple hands in a 3D set. Richer clothes, seams, pockets,
+hat detail and accessories enhance that family. Front/profile/back art follows
+body heading; do not replace it with another character system.
 
-With the local authoring engine installed, recover a failed late finalization:
+EntityRegistry defines named persistent assemblies: mc owns complete character
+components, center_table owns its contents, main_room owns the furnished set.
+Explicit hand-socket transfer preserves prop identity. Close-ups retain connected
+hands and body context, or are true object-only inserts without floating hands.
+Keep room geography, wardrobe and lighting consistent across cuts.
 
-```
-python engine/video_engine.py recover FAILED_JOB_ID
-```
+The normal CPU sound-state evaluation checks those invariants alongside exact
+animation transitions. Author relevant material sounds; do not estimate contact
+positions or add a repeated editorial review loop. Permanent voice: Heart 1.0.
 
-Recovery requires the same runtime's saved complete worker MP4s, unchanged local
-project inputs and the matching cloud soundtrack. It only remuxes, checks,
-downloads and exports; it does not start Chrome or silently rerender. It cannot
-recover files erased by a deleted runtime. Updating this repository does not
-restart an already running notebook or alter an active job. Open the fresh
-notebook on the next runtime session; do not interrupt an active recovery.
+## Rendering
 
-## Three.js/WebGL backend
+The normal capture path composes WebGL on NVIDIA and uses the browser's native
+software H.264 encoder. It does not claim hardware video encoding. Worker range
+is 1-8; default one follows actual measurements. More workers cannot guarantee
+more throughput. Live progress shows stages, unique completed frames and workers.
 
-Projects may select `{"backend":"webgl","execution":"colab"}` in
-render_backend.json. The local engine sends HTML, Three.js code, glTF assets,
-fonts and the mixed soundtrack. The runtime caches official Node/Chrome on
-demand, then captures with one persistent browser and streams frames to FFmpeg.
-NVIDIA WebGL has been verified on a Colab T4 using ANGLE gl-egl; Vulkan failed
-there because the driver did not expose VK_KHR_xcb_surface. Software fallback is
-refused. Current project code must provide OP.gpuInfo/OP.frame and the standard
-timing interface. Blender is a separate optional backend.
+Finalization retains complete captured segments, preserves encoded video packets,
+pads/trims audio to the exact frame clock, then checks frame counts and black
+frames. A failed finalization is an error, not a completed video. The detached
+local worker retrieves, checks and saves successful exports with metadata.
 
-`python engine/video_engine.py render projects/PROJECT` retains the normal
-detached sound/mix/render/check/download/open workflow. The same
-`gpu_runtime.py project PROJECT --task build` performs a functional cloud check;
-`--task render` renders a prepared soundtrack directly. Four-worker EEVEE
-settings below do not apply to this one-browser WebGL path.
-
-Host RAM correction: four scene copies exceeded the 12.7 GB VM's system RAM in
-the first live attempt, with no completed frames and one killed worker. Worker
-admission now uses available host RAM: 2 GiB reserve and an estimated 3.5 GiB per
-Blender scene. This VM normally admits two; larger RAM can admit four. A request
-for four is an upper bound, not an instruction to exceed available RAM. Rendering
-settings and animation are retained. Progress/logs now include host RAM and
-per-worker RSS; sustained critical headroom ends the job cleanly with cached
-completed frames retained. Failure progress is updated after all peers stop.
-
-Open GPU_Runtime.ipynb in Google Colab, select an NVIDIA GPU and run its cell.
-It prints a temporary HTTPS URL and a private token. The service supports arbitrary
-Python, shell command jobs, an interactive Linux PTY, upload/download, output logs,
-cancellation, and native GPU access. No particular video is embedded. Google Drive
-is not mounted. Keep the token private: it grants execution and file access.
-
-The first setup downloads verified Blender, system libraries and the attributed
-Snow character. Tools/assets are cached for the life of that VM. The EGL selection
-fix is included. A new/deleted VM needs setup again; rerunning in the same live VM
-reuses the authenticated server and jobs and refreshes its tunnel. Provider limits
-and external-control restrictions still apply; no uptime guarantee is made.
-
-On the Windows workstation, open E:/video engine and double-click Connect_Runtime.cmd
-(or run `python engine/gpu_runtime.py connect`). Enter the URL and private token.
-They are saved under the user's private .colab-codex folder, never in this repo.
-The phone can start the notebook; no mouse connection to it is needed afterward.
-
-## Commands from E:/video engine
-
-```
-python engine/gpu_runtime.py status
-python engine/gpu_runtime.py upload local-file.py /content/my-file.py
-python engine/gpu_runtime.py python local-file.py
-python engine/gpu_runtime.py shell local-commands.sh
-python engine/gpu_runtime.py job JOB_ID
-python engine/gpu_runtime.py cancel JOB_ID
-python engine/gpu_runtime.py download /content/result.mp4 "E:/video engine/outputs/result.mp4"
-python engine/gpu_runtime.py terminal-start
-python engine/gpu_runtime.py terminal-write TERMINAL_ID "nvidia-smi"
-python engine/gpu_runtime.py terminal-read TERMINAL_ID
-python engine/gpu_runtime.py terminal-close TERMINAL_ID
-```
-
-File transfers use 3 MB chunks and verify SHA-256 before committing the destination.
-The API also supports interactive terminal input/output; Windows local tests check
-platform gating, while the Linux PTY still needs live validation.
-
-## Video projects and small GPU tests
-
-```
-python engine/gpu_runtime.py project projects/PROJECT --task build
-python engine/gpu_runtime.py project projects/PROJECT --task probe --first 96
-python engine/gpu_runtime.py project projects/PROJECT --task render --workers 4
-```
-
-These commands upload project source/audio/assets without reference videos, caches
-or private model weights. Source-based Blender projects provide build_scene.py
-with --project, --frames and --prepare-only arguments, producing prepared-scene.blend
-and prepared-scene.json. Rig source assets are available from the shared cache.
-The GPU runtime performs preparation and rendering; the laptop does not render.
-Probes select up to 32 consecutive frames at full resolution; completed images are
-retrieved automatically. Full video jobs retain narration, music/effects and captions,
-perform the basic MP4 check, download and open the video. The four Blender workers
-load their scenes once and retain their assigned full frame ranges.
-
-Four persistent EEVEE workers are the current default. Choose --workers 1, 2, 3
-or 4 for a new job without changing source or publishing again. Existing running
-jobs keep their worker count. Four workers are locally tested for orchestration;
-their throughput on a T4 is not yet measured. GPU memory may fluctuate and more
-workers do not guarantee a speedup.
-
-The running notebook shows a live dashboard, refreshed every 3 seconds. It counts
-unique completed frames across all workers, includes cached frames, and shows
-each worker's status, current frame, completed range and PID. Overall elapsed
-render time, measured frame rate and estimated remaining render time appear
-after sufficient frames finish. Loading and encoding are separate stages; ETA
-does not include encoding or file transfer. A static high frame number from a
-later worker is never used as the total completed count. The local detached
-watcher's status.json also records progress and downloaded bytes.
-
-The project command returns a job ID immediately and starts a hidden local watcher.
-Logs, status and errors are under engine/jobs/runtime-REQUEST_ID; results go to
-E:/video engine/outputs. The watcher reports failures; it does not repair animation.
-The normal `python engine/video_engine.py render projects/PROJECT` also uses this
-runtime for Blender projects with execution set to colab.
-
-The connection is general-purpose: subsequent projects use the same notebook and
-URL while the runtime lives. Reconnect only when its URL/token changes. This repo
-still contains the earlier single-scene notebooks as legacy examples.
-
-Snow Rig © Blender Foundation | studio.blender.org — CC BY 4.0.
+The current notebook neither installs nor executes Blender or its character
+assets. Historical code remains in prior commits only. Runtime tokens, account
+credentials, private source projects and AI model weights are never published.

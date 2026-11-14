@@ -1,0 +1,102 @@
+{
+  "bookFlip1.ogg": [
+    "paper"
+  ],
+  "bookFlip2.ogg": [
+    "paper"
+  ],
+  "handleSmallLeather.ogg": [
+    "leather",
+    "equipment-case"
+  ],
+  "handleSmallLeather2.ogg": [
+    "leather"
+  ],
+  "handleCoins.ogg": [
+    "coin"
+  ],
+  "handleCoins2.ogg": [
+    "coin"
+  ],
+  "footstep00.ogg": [
+    "shoe-on-street"
+  ],
+  "footstep03.ogg": [
+    "shoe-on-street",
+    "shoe-on-floor",
+    "shoe-on-concrete"
+  ],
+  "footstep05.ogg": [
+    "shoe-on-street"
+  ],
+  "footstep07.ogg": [
+    "shoe-on-street"
+  ],
+  "metalClick.ogg": [
+    "metal-lock",
+    "camera-switch",
+    "caster-contact",
+    "equipment-contact"
+  ],
+  "metalLatch.ogg": [
+    "metal-lock",
+    "camera-mount"
+  ],
+  "doorOpen_1.ogg": [
+    "wooden-door"
+  ],
+  "doorOpen_2.ogg": [
+    "wooden-door"
+  ],
+  "bookOpen.ogg": [
+    "book"
+  ],
+  "bookClose.ogg": [
+    "book"
+  ],
+  "car_idle_loop.ogg": [
+    "vehicle-engine"
+  ],
+  "car_mid_loop.ogg": [
+    "vehicle-engine"
+  ],
+  "car_start.ogg": [
+    "vehicle-engine"
+  ],
+  "car_stop.ogg": [
+    "vehicle-engine"
+  ],
+  "door_open_01.ogg": [
+    "car-door"
+  ],
+  "door_close_01.ogg": [
+    "car-door"
+  ],
+  "car_horn_short_01.ogg": [
+    "car-horn"
+  ],
+  "police_wail_loop.ogg": [
+    "police-siren"
+  ],
+  "indicator_loop.ogg": [
+    "car-indicator"
+  ],
+  "impactWood_heavy_000.ogg": [
+    "wood-impact"
+  ],
+  "impactBell_heavy_000.ogg": [
+    "metal-bell"
+  ],
+  "doorClose_1.ogg": [
+    "wooden-door"
+  ],
+  "metalPot1.ogg": [
+    "metal-impact"
+  ],
+  "radio_open.ogg": [
+    "radio-signal"
+  ],
+  "radio_reveal.ogg": [
+    "horror-reveal"
+  ]
+}

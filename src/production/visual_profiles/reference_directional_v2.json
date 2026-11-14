@@ -1,0 +1,9 @@
+{
+  "id": "reference-cartoon-directional-v2",
+  "status": "One-minute correction test for the normal WebGL cartoon pipeline; awaiting user evaluation",
+  "character_source": "engine/webgl_kit/directional_actor.js and toon.js",
+  "character_style": "The existing illustrated round-headed cartoon family with directional front/profile/back artwork, stable wardrobe and connected curved arms",
+  "preserve": ["complete character assembly", "consistent identity and clothes", "world-space movement direction", "hands connected to the body", "persistent room geography", "actual-contact Foley", "Heart generation speed 1.0"],
+  "rejected": ["Blender character/asset substitution for this test", "frontal artwork while walking away", "hiding bodies for prop inserts", "floating hands", "rebuilding the room at each cut"],
+  "instructions": "VIDEO_WORKFLOW.md"
+}

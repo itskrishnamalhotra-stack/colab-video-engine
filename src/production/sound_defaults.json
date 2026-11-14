@@ -1,0 +1,6 @@
+{
+  "profile": "clean-contact-v1",
+  "rejected_samples": ["drawKnife*.ogg", "knifeSlice*.ogg", "cloth*.ogg", "creak*.ogg"],
+  "reason": "The user rejected the scratchy/rubbing sound in this Foley bank. Avoid rasp loops and generic friction for gestures.",
+  "guidance": "Use brief clean contact sounds for focused actions. Paper and leather should be short and restrained; music carries motion without a physical contact sound. No continuous scratch layer."
+}

@@ -1,0 +1,38 @@
+{
+  "id": "reference-cartoon-v1",
+  "status": "User-approved visual family; new stories still require direction and animation",
+  "approved_example": "projects/pickpocket-webgl-extended",
+  "character_source": "engine/webgl_kit/directional_actor.js and toon.js",
+  "character_style": "Round pale heads, integrated eyes/brows/mouth, long illustrated coats, short dark legs, curved dark arms and simple mitten hands in a detailed 3D world",
+  "preserve": [
+    "head/body proportions",
+    "coherent face",
+    "illustrated silhouette",
+    "stable hand sockets",
+    "readable prop sizes",
+    "expressive reactions",
+    "motivated camera coverage",
+    "furnished sets and lighting",
+    "Heart narration at speed 1.0"
+  ],
+  "customize_for_story": [
+    "clothes and palette within the same family",
+    "cast and relevant props",
+    "sets and lighting",
+    "action choreography",
+    "shot framing",
+    "sound contacts"
+  ],
+  "rejected": [
+    "FilmActor from motion-quality-test",
+    "Quaternius mannequin anatomy for this look",
+    "primitive 3D human replacements",
+    "separate mouth/chin overlay",
+    "random narration-driven mouth flapping",
+    "static actor with only a slow camera zoom",
+    "Blender-derived characters or a different visual family"
+  ],
+  "sound_profile": "engine/sound_defaults.json",
+  "instructions": "APPROVED_VIDEO_STANDARD.md and VIDEO_WORKFLOW.md",
+  "permanent_style": true
+}
