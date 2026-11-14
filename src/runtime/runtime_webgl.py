@@ -2,7 +2,7 @@
 import argparse,collections,concurrent.futures,fcntl,hashlib,json,os,re,subprocess,time,threading
 from pathlib import Path
 from runtime_progress import emit_progress
-from runtime_webgl_setup import setup
+from runtime_setup import setup
 from runtime_memory import host_memory
 from webgl_partition import partition,Progress,MAX_WEBGL_WORKERS
 
