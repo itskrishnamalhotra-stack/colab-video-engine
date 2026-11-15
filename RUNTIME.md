@@ -56,3 +56,17 @@ local worker retrieves, checks and saves successful exports with metadata.
 The current notebook neither installs nor executes Blender or its character
 assets. Historical code remains in prior commits only. Runtime tokens, account
 credentials, private source projects and AI model weights are never published.
+
+## Long-form direction and cloud sound preparation
+
+Kit 2.1.0 adds persistent furnished hospital locations, reusable camera coverage,
+directional performances, explicit prop transfers and monitor portraits from the
+same saved character appearance. See src/production/LONG_FORM_DIRECTION.md.
+Narration can use a natural duration bounded by an authored maximum; actual native
+speech timing ends on the frame clock without padding to that maximum.
+
+Opt-in cloud_prepare=true with audio_execution=colab runs the normal action-state
+trace and bounded-memory soundtrack mix on the runtime. Every referenced Foley
+source is uploaded; local verified preparation receipts avoid repeating the same
+trace/mix/large transfer at the final capture handoff. Source, mix and measured-cue
+guards remain active. No additional editorial review stage is introduced.

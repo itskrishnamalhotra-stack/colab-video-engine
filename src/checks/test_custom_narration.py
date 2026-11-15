@@ -2,10 +2,14 @@ import hashlib,json,sys,tempfile,unittest
 from pathlib import Path
 from unittest.mock import patch
 from narration_profile import resolve,install_default
-from runtime_custom_narration import map_native_words,fit_outro
+from runtime_custom_narration import map_native_words,fit_outro,output_samples
 import video_engine
 
 class NativeWordTiming(unittest.TestCase):
+ def test_natural_long_form_ends_on_frame_clock_without_padding_to_limit(self):
+  self.assertEqual(output_samples(759.095,900,'natural'),22773*800)
+  self.assertEqual(output_samples(60,60,'fixed'),1440000)
+  with self.assertRaisesRegex(ValueError,'limit'):output_samples(901,900,'natural')
  def test_small_overflow_only_shortens_silent_outro(self):
   outro,removed=fit_outro(60.045,60,.5);self.assertAlmostEqual(outro,.455);self.assertAlmostEqual(removed,.045)
   self.assertEqual(fit_outro(61,60,.5),(.5,0.0));self.assertEqual(fit_outro(59,60,.5),(.5,0))

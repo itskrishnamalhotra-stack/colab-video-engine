@@ -1,7 +1,7 @@
 """Install a pinned copy of shared, regression-checked WebGL production components."""
 import argparse,hashlib,json,shutil
 from pathlib import Path
-ROOT=Path(__file__).resolve().parent;KIT=ROOT/'webgl_kit';VERSION='2.0.0'
+ROOT=Path(__file__).resolve().parent;KIT=ROOT/'webgl_kit';VERSION='2.1.0'
 
 def digest(path):return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 

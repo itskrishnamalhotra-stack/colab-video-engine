@@ -78,7 +78,7 @@ const server=http.createServer((req,res)=>{
  }catch{res.writeHead(404);res.end();}
 });
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
-const chrome=process.env.CHROME||'C:/Program Files/Google/Chrome/Application/chrome.exe';
+const chrome=process.env.CHROME||(process.platform==='win32'?'C:/Program Files/Google/Chrome/Application/chrome.exe':'google-chrome');
 const profile=fs.mkdtempSync(path.join(os.tmpdir(),'action-trace-'));
 let browser,ws;
 try{

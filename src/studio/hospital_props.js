@@ -29,15 +29,15 @@ export function makeGurney(parent){
  const patient=new THREE.Group();patient.position.set(0,.90,-.67);g.add(patient);
  Object.assign(g,{wheels,grip,patient});return g;
 }
-export function makePhone(parent){
- const g=new THREE.Group();parent.add(g);box(g,.155,.30,.025,'#1D3036');
+export function makePhone(parent,{color='#1D3036'}={}){
+ const g=new THREE.Group();parent.add(g);box(g,.155,.30,.025,color);
  const labels=new Map();
  for(const [name,lines] of Object.entries({play:['VOICE MEMO','PLAY  >'],silence:['DO NOT','ANSWER'],plan:['RECORDING','THEN LATCH'],test:['FOLLOW THE','RECORDING'],call:['EMERGENCY','CALLING...'],help:['IT MOVES WHEN','WE ANSWER']})){
   const o=card(g,words(lines,{paper:'#C1CDBB',ink:'#263E43',font:'sans-serif'}),.136,.251,0,0,.014);labels.set(name,o);
  }
  g.setMode=mode=>{for(const [name,o] of labels)o.visible=name===mode;g.userData.mode=mode;};g.setMode('play');return g;
 }
-export function makeMonitor(parent,{portable=false}={}){
+export function makeMonitor(parent,{portable=false,appearance=null}={}){
  const g=new THREE.Group(),lid=new THREE.Group();parent.add(g);g.add(lid);g.lid=lid;
  box(lid,.94,.57,.09,'#263D42',0,.36,0);
  if(portable){box(g,.98,.045,.65,'#657D7B',0,.03,.25);for(let r=0;r<4;r++)for(let c=0;c<10;c++)box(g,.067,.009,.045,'#29454B',-.37+c*.082,.06,.12+r*.07);box(g,.25,.009,.10,'#90A59A',0,.06,.48);}
@@ -47,7 +47,7 @@ export function makeMonitor(parent,{portable=false}={}){
   const image=texture((ctx,w,h)=>{
    ctx.fillStyle='#244247';ctx.fillRect(0,0,w,h);ctx.fillStyle='#557777';ctx.fillRect(0,h*.70,w,h*.3);
    for(let i=0;i<5;i++){ctx.strokeStyle='#395F61';ctx.lineWidth=14;ctx.strokeRect(70+i*145,110,75,370);}
-   if(['ben','impostor'].includes(mode)){ctx.save();ctx.translate(w*.28,h*.05);ctx.scale(.46,.46);drawToon(ctx,{body:'#AA7956',head:mode==='ben'?'#F3F1E8':'#BAC8B8',hat:'beanie',hatCol:'#A96A42',pattern:'plain',neck:'collar',extra:[]},{mood:mode==='ben'?'neutral':'smug',armL:[48,10],armR:[8,6],legs:'stand'});ctx.restore();}
+   if(['ben','impostor'].includes(mode)){ctx.save();ctx.translate(w*.28,h*.05);ctx.scale(.46,.46);drawToon(ctx,{body:'#AA7956',hat:'beanie',hatCol:'#A96A42',pattern:'plain',neck:'collar',extra:[],...appearance,head:mode==='ben'?'#F3F1E8':'#BAC8B8'},{mood:mode==='ben'?'neutral':'smug',armL:[48,10],armR:[8,6],legs:'stand'});ctx.restore();}
    if(mode==='trolley'){ctx.fillStyle='#97AD9D';ctx.fillRect(w*.48,h*.52,w*.34,35);for(const x of[.5,.79]){ctx.fillStyle='#172E35';ctx.fillRect(w*x,h*.58,12,80);ctx.beginPath();ctx.arc(w*x,h*.76,17,0,7);ctx.fill();}}
    if(mode==='door'){ctx.fillStyle='#7B9388';ctx.fillRect(w*.34,h*.14,w*.32,h*.60);ctx.fillStyle='#21393D';ctx.fillRect(w*.43,h*.3,w*.14,h*.15);}
    if(mode==='black'){ctx.fillStyle='#101C21';ctx.fillRect(0,0,w,h);}

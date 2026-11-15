@@ -4,6 +4,11 @@ from runtime_bridge import render_remote
 
 def prepare_audio(job,cfg,run_command):
  project=Path(job['project']);cue_script=project/'prepare_cues.py'
+ import json
+ script=json.loads((project/'script.json').read_text())
+ if script.get('audio_execution')=='colab' and script.get('cloud_prepare',False):
+  from cloud_prepare import prepare
+  return prepare(job,cfg)
  if (project/'visual_profile.json').is_file() and not (project/'action_plan.json').is_file():
   raise ValueError('Reference-cartoon projects require action_plan.json with authored clean contact Foley; do not reuse the legacy procedural soundtrack.')
  if (project/'action_plan.json').is_file():

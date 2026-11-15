@@ -4,6 +4,13 @@ from pathlib import Path
 import numpy as np
 import soundfile as sf
 SR=24000
+
+def output_samples(total,target,policy='fixed',fps=30):
+ if policy not in ('fixed','natural'):raise ValueError('Unknown narration duration policy')
+ if total>target+2/SR:raise ValueError('Narration exceeds its requested duration limit')
+ # Natural long-form delivery ends after the authored outro, rounded UP to the
+ # video frame clock. A duration limit must not become a minute of dead padding.
+ return round(target*SR) if policy=='fixed' else __import__('math').ceil(total*fps-1e-8)*(SR//fps)
 def norm(word):return re.sub('[^a-z0-9]','',word.lower())
 def fit_outro(total,target,outro,minimum=.15):
  excess=max(0,total-target)
@@ -34,7 +41,7 @@ def generate(project):
  pack=np.load(pack_path,allow_pickle=False)
  if pack.shape!=(510,1,256) or pack.dtype!=np.float32 or not np.isfinite(pack).all():raise ValueError('Invalid custom voice pack')
  pipe=KPipeline(lang_code='a',repo_id='hexgrad/Kokoro-82M',device='cuda');voice=torch.from_numpy(pack)
- target=float(script['target_duration']);lead=float(script.get('lead',.2));outro=float(script.get('outro',.5));speed=float(spec.get('speed',1));maximum=float(spec.get('maximum_speed',speed));attempts=[]
+ target=float(script['target_duration']);policy=script.get('duration_policy','fixed');lead=float(script.get('lead',.2));outro=float(script.get('outro',.5));speed=float(spec.get('speed',1));maximum=float(spec.get('maximum_speed',speed));attempts=[]
  for attempt in range(3):
   chunks=[np.zeros(round(lead*SR),np.float32)];clock=lead;lines=[];words=[];speech=0;gaps=0
   with torch.inference_mode():
@@ -57,7 +64,7 @@ def generate(project):
   if needed>maximum:raise ValueError(f'Narration needs speed {needed:.3f} to fit {target}s, exceeding selected bound {maximum}')
   speed=round(needed,4)
  else:raise ValueError('Narration could not fit its requested duration within bounded native synthesis attempts')
- chunks.append(np.zeros(round(outro*SR),np.float32));audio=np.concatenate(chunks);target_samples=round(target*SR)
+ chunks.append(np.zeros(round(outro*SR),np.float32));audio=np.concatenate(chunks);target_samples=output_samples(len(audio)/SR,target,policy);target=target_samples/SR
  if len(audio)>target_samples:
   excess=len(audio)-target_samples
   if excess>2 or np.any(audio[-excess:]!=0):raise ValueError('Narration overflow would cut speech; refusing truncation')
@@ -67,7 +74,7 @@ def generate(project):
  script.update(voice=spec['voice'],speed=speed);(p/'script.json').write_text(json.dumps(script,indent=2))
  (data/'lines.json').write_text(json.dumps(dict(duration=target,voice=spec['voice'],speed=speed,lines=lines),indent=2))
  (data/'words.json').write_text(json.dumps(words,indent=2));(data/'words.txt').write_text('\n'.join(f"{w['s']:7.3f} {w['e']:7.3f} L{w['line']} {w['w']}" for w in words))
- report=dict(voice=spec['voice'],pack_sha256=spec['pack_sha256'],gpu=torch.cuda.get_device_name(0),device='cuda',word_timing='native Kokoro synthesis-duration tokens; no estimated fallback',words=len(words),duration=target,speed=speed,attempts=attempts,total_seconds=round(time.monotonic()-started,2))
+ report=dict(voice=spec['voice'],pack_sha256=spec['pack_sha256'],gpu=torch.cuda.get_device_name(0),device='cuda',word_timing='native Kokoro synthesis-duration tokens; no estimated fallback',words=len(words),duration=target,duration_policy=policy,speed=speed,attempts=attempts,total_seconds=round(time.monotonic()-started,2))
  (data/'narration-report.json').write_text(json.dumps(report,indent=2));print('CUSTOM_NARRATION_READY '+json.dumps(report),flush=True)
 if __name__=='__main__':
  p=argparse.ArgumentParser();p.add_argument('project');a=p.parse_args();generate(a.project)
