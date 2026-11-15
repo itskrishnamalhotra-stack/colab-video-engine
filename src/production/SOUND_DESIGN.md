@@ -1,5 +1,24 @@
 # Frame-bound sound design
 
+Latest narrator selection (2026-11-15): the user explicitly chose the saved
+am_liam_clean_1 clone as the default for ALL future videos, superseding earlier
+Heart-only rules. This is the approved custom pack, not stock Kokoro am_liam.
+Base synthesis speed is 1.0; bounded native fitting up to 1.15 is allowed for an
+authored target duration and is recorded in narration-report.json. New projects
+copy and hash-pin the existing pack via narration_profile.install_default;
+existing projects keep their selected voices. Do not clone/retrain per video.
+Use native synthesis word timing, measured action sounds and the same approved
+illustrated visual standard. Never publish the voice pack or reference audio.
+
+The matching one-minute Liam test already completed: job
+20261114T234821-7c440ef6, 253.47s total, 1920x1080 / 30 fps / 60.000s.
+Final Videos/the-room-that-remembers-liam-20261114T234821-7c440ef6.mp4 uses the
+selected pack (SHA-256 7848f8f078f26e14a60315e04d6efb896ad4843d48d7e346f6c828d1f11e463f).
+Its native synthesis speed is 1.1012 to fit 60 seconds; no speech was truncated.
+User requested this voice test, not permission to publish it. Original Heart
+finals remain preserved. Reopened this verified matching export for the latest
+request rather than claiming an identical new capture was needed.
+
 Reusable music rule (2026-11-15): Music must be present and audible on phone
 speakers, with a story/genre-specific original or licensed instrumental source.
 Avoid a sub-bass-only bed. Use shared music_mix.py / music_policy.json in both

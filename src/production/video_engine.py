@@ -375,6 +375,8 @@ def new_project(style, name):
     script = read(project / 'script.json')
     script.update(voice=cfg['voice'], speed=cfg['speed'])
     write(project / 'script.json', script)
+    from narration_profile import install_default
+    install_default(project,cfg)
     shutil.copy2(ROOT / 'capture.mjs', project / 'tools/capture.mjs')
     if (ROOT/'cloud_capture.mjs').is_file():shutil.copy2(ROOT/'cloud_capture.mjs',project/'tools/cloud_capture.mjs')
     if (ROOT/'capture_transport.mjs').is_file():shutil.copy2(ROOT/'capture_transport.mjs',project/'tools/capture_transport.mjs')

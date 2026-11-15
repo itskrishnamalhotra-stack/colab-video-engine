@@ -1,7 +1,7 @@
 import hashlib,json,sys,tempfile,unittest
 from pathlib import Path
 from unittest.mock import patch
-from narration_profile import resolve
+from narration_profile import resolve,install_default
 from runtime_custom_narration import map_native_words,fit_outro
 import video_engine
 
@@ -18,6 +18,19 @@ class NativeWordTiming(unittest.TestCase):
    with self.assertRaises(ValueError):map_native_words('hello',tokens,0,0,1)
 
 class CustomNarrator(unittest.TestCase):
+ def test_saved_custom_default_is_copied_and_pinned_without_changing_old_projects(self):
+  with tempfile.TemporaryDirectory() as directory:
+   root=Path(directory);source=root/'selected.npy';source.write_bytes(b'approved saved pack');project=root/'new';project.mkdir()
+   spec=dict(engine='kokoro-custom',execution='colab',voice='am_liam_clean_1',pack='voices/am_liam_clean_1.npy',pack_source=str(source),pack_sha256=hashlib.sha256(source.read_bytes()).hexdigest(),speed=1.,maximum_speed=1.15)
+   cfg=dict(voice='am_liam_clean_1',speed=1.,default_narrator=spec)
+   (project/'script.json').write_text(json.dumps(dict(voice=cfg['voice'],speed=1.)))
+   with self.assertRaisesRegex(ValueError,'pinned project'):resolve(project,cfg)
+   selected=install_default(project,cfg);self.assertTrue(selected['custom']);self.assertEqual(Path(selected['pack_path']).read_bytes(),source.read_bytes())
+   self.assertNotIn('pack_source',json.loads((project/'narrator.json').read_text()))
+   old=root/'old';old.mkdir();(old/'script.json').write_text(json.dumps(dict(voice='af_heart',speed=1.)))
+   self.assertEqual(resolve(old,cfg),dict(voice='af_heart',speed=1.,custom=False))
+   source.write_bytes(b'changed pack');another=root/'other';another.mkdir()
+   with self.assertRaisesRegex(ValueError,'missing or changed'):install_default(another,cfg)
  def test_override_is_project_scoped_and_pack_hash_is_checked(self):
   cfg=dict(voice='af_heart',speed=1.0)
   with tempfile.TemporaryDirectory() as directory:

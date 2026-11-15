@@ -7,12 +7,13 @@ def generate(job,cfg,profile):
  p=Path(job['project']);client=Client();root=client.api('GET','/engine/capabilities')['root'];remote=root+'/projects/'+p.name
  save_stage(job,'uploading_selected_voice_and_script')
  for name in ('script.json','narrator.json',profile['pack']):client.upload(p/name,remote+'/'+name)
- client.upload(Path(__file__).with_name('runtime_custom_narration.py'),root+'/runtime_custom_narration.py')
+ for module in ('runtime_custom_narration.py','runtime_voice_setup.py'):
+  client.upload(Path(__file__).with_name(module),root+'/'+module)
  code=f'''from pathlib import Path
-import subprocess,json
-root=Path({root!r});setup=root/'voice-lab/setup.json'
-if not setup.is_file():raise RuntimeError('The cached GPU voice environment is missing in this runtime')
-python=json.loads(setup.read_text())['python']
+import subprocess,sys
+root=Path({root!r});sys.path.insert(0,str(root))
+from runtime_voice_setup import ensure
+python=ensure(root)
 subprocess.run([python,'-u',str(root/'runtime_custom_narration.py'),{remote!r}],check=True)
 '''
  remote_job=client.python(code,timeout=1800);job['colab_audio_job_id']=remote_job['job_id'];write(job['status_file'],job);save_stage(job,'generating_custom_narration_on_gpu')

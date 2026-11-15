@@ -10,7 +10,7 @@
     "hands connected to the body",
     "persistent room geography",
     "actual-contact Foley",
-    "Heart generation speed 1.0"
+    "selected saved narrator identity with recorded native timing"
   ],
   "rejected": [
     "Blender character/asset substitution in production",
@@ -27,5 +27,6 @@
     "scope": "camera coverage and movement, body acting, connected hands and prop handling, permanent cartoon family, persistent set continuity",
     "reuse": "canonical WebGL helpers with story-specific direction; no additional routine review stage"
   },
-  "production_cautions": "engine/PRODUCTION_LESSONS.md"
+  "production_cautions": "engine/PRODUCTION_LESSONS.md",
+  "narrator_policy": "Saved am_liam_clean_1 is the default for future projects as of 2026-11-15; keep existing project narrator pins and overrides."
 }

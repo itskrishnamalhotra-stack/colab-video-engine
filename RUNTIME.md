@@ -35,7 +35,11 @@ Keep room geography, wardrobe and lighting consistent across cuts.
 
 The normal CPU sound-state evaluation checks those invariants alongside exact
 animation transitions. Author relevant material sounds; do not estimate contact
-positions or add a repeated editorial review loop. Permanent voice: Heart 1.0.
+positions or add a repeated editorial review loop. Default narrator: the user-selected saved am_liam_clean_1 custom pack (2026-11-15).
+New projects pin the pack by hash; previous projects retain their narrator. Voice
+packs and model weights remain private and are not included in this repository.
+Custom inference lazily prepares/reuses an isolated CUDA Kokoro environment via
+runtime_voice_setup.py. Base speed is 1.0; bounded native fitting is recorded.
 
 ## Rendering
 
