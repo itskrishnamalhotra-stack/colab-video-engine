@@ -7,13 +7,8 @@ def setup(root):
  if not all(shutil.which(n) for n in ('ffmpeg','ffprobe')) or not all(ctypes.util.find_library(n) for n in ('EGL','GL')):
   subprocess.run(['apt-get','-qq','update'],check=True)
   subprocess.run(['apt-get','-qq','install','-y','ffmpeg','libegl1','libgl1','libxrender1','libxi6','libxkbcommon0','libsm6'],check=True)
- vendors=list(Path('/usr/share/glvnd/egl_vendor.d').glob('*nvidia*.json'))+list(Path('/usr/local/share/glvnd/egl_vendor.d').glob('*nvidia*.json'))
- previous={}
- environment=root/'gpu-environment.json'
- if environment.is_file():previous=json.loads(environment.read_text())
- selected={k:previous[k] for k in ('LD_LIBRARY_PATH','__EGL_VENDOR_LIBRARY_FILENAMES') if previous.get(k)}
- selected['__GLX_VENDOR_LIBRARY_NAME']='nvidia'
- if vendors and not selected.get('__EGL_VENDOR_LIBRARY_FILENAMES'):selected['__EGL_VENDOR_LIBRARY_FILENAMES']=':'.join(map(str,vendors))
+ from webgl_graphics_environment import select_nvidia
+ selected=select_nvidia(root)
  os.environ.update(selected);(root/'gpu-environment.json').write_text(json.dumps(selected,indent=2))
  nodes=sorted(tools.glob('node-v22.*-linux-x64/bin/node'))
  if nodes:node=nodes[-1]

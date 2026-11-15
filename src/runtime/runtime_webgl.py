@@ -5,6 +5,7 @@ from runtime_progress import emit_progress
 from runtime_setup import setup
 from runtime_memory import host_memory
 from webgl_partition import partition,Progress,MAX_WEBGL_WORKERS
+from webgl_graphics_environment import capture_environment
 
 def digest(path):
  with Path(path).open('rb') as stream:return hashlib.file_digest(stream,'sha256').hexdigest()
@@ -19,8 +20,8 @@ def run(root,name,task,identifier,workers=2):
  work=root/'runs'/identifier/'video_engine';work.mkdir(parents=True,exist_ok=True)
  try:
   emit_progress(work,'preparing_webgl',project=name,request_id=identifier,task=task)
-  tools=setup(root);env=os.environ.copy()
-  if (root/'gpu-environment.json').is_file():env.update(json.loads((root/'gpu-environment.json').read_text()))
+  tools=setup(root);selected=json.loads((root/'gpu-environment.json').read_text())
+  env=capture_environment(os.environ,selected)
   backend=json.loads((project/'render_backend.json').read_text())
   env.update(CHROME=tools['chrome'],RENDER_GPU='1',REQUIRE_NVIDIA='1',FPS='30',QS=backend.get('capture_query','&res=1&aa=4&shadow=2048'))
   script=project/'tools/cloud_capture.mjs'

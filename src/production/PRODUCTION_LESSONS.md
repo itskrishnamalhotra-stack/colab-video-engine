@@ -64,3 +64,16 @@ Do not bypass failed timing, cache, frame-count or black-frame gates. A submitte
 job is not a finished video. The detached worker owns checks, retrieval and opening;
 fix a reported execution failure in shared code where applicable, without turning
 ordinary production into a recurring editorial review process.
+
+## NVIDIA browser selection after a fresh runtime
+
+The 2026-11-15 long-form capture stopped at zero frames because Chrome selected
+Mesa llvmpipe although the T4 CUDA device and graphics libraries were present.
+The runtime exposed /usr/lib64-nvidia/libEGL_nvidia.so.0 but had no NVIDIA EGL
+vendor registration. runtime_webgl_setup now uses webgl_graphics_environment.py
+to load-check the installed vendor library, write a runtime-owned EGL descriptor
+with its exact path, and select it for capture. Software overrides are removed
+from child capture environments. No drivers or retired backend assets are used.
+The NVIDIA renderer check stays enforced; missing graphics libraries fail clearly.
+The client uploads this helper for existing notebooks, and new notebook bundles
+include it. Reuse prepared narration/sound/action data for a startup-only retry.
