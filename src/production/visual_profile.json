@@ -34,5 +34,13 @@
   ],
   "sound_profile": "engine/sound_defaults.json",
   "instructions": "APPROVED_VIDEO_STANDARD.md and VIDEO_WORKFLOW.md",
-  "permanent_style": true
+  "permanent_style": true,
+  "approved_motion_benchmark": {
+    "project": "projects/the-room-that-remembers",
+    "approved_on": "2026-11-15",
+    "completed_export": "Final Videos/the-room-that-remembers-20261114T225449-da5ab334.mp4",
+    "scope": "camera coverage and movement, body acting, connected hands and prop handling, permanent cartoon family, persistent set continuity",
+    "reuse": "canonical WebGL helpers with story-specific direction; no additional routine review stage"
+  },
+  "production_cautions": "engine/PRODUCTION_LESSONS.md"
 }

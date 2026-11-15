@@ -1,9 +1,31 @@
 {
   "id": "reference-cartoon-directional-v2",
-  "status": "One-minute correction test for the normal WebGL cartoon pipeline; awaiting user evaluation",
+  "status": "User-approved permanent cartoon family and camera/body-movement benchmark; new stories require their own direction",
   "character_source": "engine/webgl_kit/directional_actor.js and toon.js",
   "character_style": "The existing illustrated round-headed cartoon family with directional front/profile/back artwork, stable wardrobe and connected curved arms",
-  "preserve": ["complete character assembly", "consistent identity and clothes", "world-space movement direction", "hands connected to the body", "persistent room geography", "actual-contact Foley", "Heart generation speed 1.0"],
-  "rejected": ["Blender character/asset substitution for this test", "frontal artwork while walking away", "hiding bodies for prop inserts", "floating hands", "rebuilding the room at each cut"],
-  "instructions": "VIDEO_WORKFLOW.md"
+  "preserve": [
+    "complete character assembly",
+    "consistent identity and clothes",
+    "world-space movement direction",
+    "hands connected to the body",
+    "persistent room geography",
+    "actual-contact Foley",
+    "Heart generation speed 1.0"
+  ],
+  "rejected": [
+    "Blender character/asset substitution in production",
+    "frontal artwork while walking away",
+    "hiding bodies for prop inserts",
+    "floating hands",
+    "rebuilding the room at each cut"
+  ],
+  "instructions": "APPROVED_VIDEO_STANDARD.md and VIDEO_WORKFLOW.md",
+  "approved_motion_benchmark": {
+    "project": "projects/the-room-that-remembers",
+    "approved_on": "2026-11-15",
+    "completed_export": "Final Videos/the-room-that-remembers-20261114T225449-da5ab334.mp4",
+    "scope": "camera coverage and movement, body acting, connected hands and prop handling, permanent cartoon family, persistent set continuity",
+    "reuse": "canonical WebGL helpers with story-specific direction; no additional routine review stage"
+  },
+  "production_cautions": "engine/PRODUCTION_LESSONS.md"
 }

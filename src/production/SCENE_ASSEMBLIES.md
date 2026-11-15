@@ -46,4 +46,6 @@ directly, render once and apply normal technical completion checks.
 Working example: projects/the-room-that-remembers/src/shots.js and
 scene_manifest.json. It has mc, center_table and main_room, directional walking,
 an actual reach/pickup, hand-held radio, stable room coverage and measured Foley.
-The example remains subject to user evaluation of its final rendered animation.
+The user approved its completed animation on 2026-11-15 as the camera/body-motion
+and continuity benchmark for future videos. See PRODUCTION_LESSONS.md for the
+authoring standard and reusable failure corrections; no extra review stage.

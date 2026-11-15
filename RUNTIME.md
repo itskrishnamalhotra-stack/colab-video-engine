@@ -14,6 +14,14 @@ modules, assets, sound master and browser capture tools for each job.
 
 ## Permanent visual family
 
+The user-approved camera/body-motion benchmark is the completed one-minute
+The Room That Remembers (2026-11-15). Carry forward its motivated camera travel,
+varied coverage, directional body acting, connected prop handling and persistent
+furnished sets within this permanent cartoon family. New stories need their own
+staging and sound triggers. See src/production/PRODUCTION_LESSONS.md for the
+reusable authoring cautions and recent failure corrections; the selected visual
+profiles are pinned into future projects. Existing active projects are untouched.
+
 Use the existing illustrated round heads, coherent face artwork, coat/bean body,
 connected curved arms and simple hands in a 3D set. Richer clothes, seams, pockets,
 hat detail and accessories enhance that family. Front/profile/back art follows
